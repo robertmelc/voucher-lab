@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Konzole sítě — Mooncher</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600..800&family=DM+Sans:wght@400;500;700&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --void:#0A0912; --panel:#16132A; --panel2:#1F1A38; --key:#241E42;
+  --edge:rgba(255,255,255,.09); --edge-hot:rgba(255,255,255,.17);
+  --violet:#9D5CF6; --violet-lit:#C084FC;
+  --ok:#46E39A; --warn:#F0B429; --bad:#E5786B;
+  --ink:#F2EEFA; --ink-2:#9A8CBB; --ink-3:#5F5382;
+  --mono:'JetBrains Mono',ui-monospace,monospace;
+  --disp:'Bricolage Grotesque',system-ui,sans-serif;
+  --body:'DM Sans',system-ui,sans-serif;
+}
+*{box-sizing:border-box}
+body{margin:0;background:radial-gradient(110% 45% at 50% -6%,rgba(157,92,246,.16),transparent 58%),var(--void);
+  color:var(--ink);font-family:var(--body);min-height:100vh}
+.wrap{max-width:1080px;margin:0 auto;padding:28px 20px 60px;display:flex;flex-direction:column;gap:26px}
+
+header{display:flex;align-items:flex-end;justify-content:space-between;gap:18px;flex-wrap:wrap;
+  border-bottom:1px solid var(--edge);padding-bottom:18px}
+h1{font-family:var(--disp);font-size:clamp(24px,4vw,32px);font-weight:800;margin:0;letter-spacing:-.02em}
+header .eyebrow{font-family:var(--mono);font-size:10px;letter-spacing:.2em;text-transform:uppercase;
+  color:var(--violet-lit);margin-bottom:7px}
+header p{margin:8px 0 0;font-size:13.5px;color:var(--ink-2);max-width:52ch;line-height:1.6}
+.rate{font-family:var(--mono);font-size:10.5px;color:var(--ink-3);text-align:right;line-height:1.7}
+
+h2{font-family:var(--mono);font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:var(--ink-3);
+  margin:0 0 14px;font-weight:400}
+
+/* --- karty okruhů --- */
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:14px}
+.scope{border:1px solid var(--edge);border-radius:18px;background:linear-gradient(180deg,var(--panel2),var(--panel));
+  padding:18px;display:flex;flex-direction:column;gap:12px;position:relative;overflow:hidden}
+.scope::before{content:'';position:absolute;inset:0 0 auto;height:2px;background:var(--violet);opacity:.55}
+.scope[data-s="warn"]::before{background:var(--warn);opacity:1}
+.scope[data-s="bad"]::before{background:var(--bad);opacity:1}
+.scope .t{display:flex;align-items:flex-start;justify-content:space-between;gap:10px}
+.scope .t b{font-family:var(--disp);font-size:17px;line-height:1.15;display:block}
+.scope .t small{font-family:var(--mono);font-size:9.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-3)}
+.tag{font-family:var(--mono);font-size:9px;letter-spacing:.1em;text-transform:uppercase;border-radius:999px;
+  padding:4px 9px;white-space:nowrap;border:1px solid}
+.tag.ok{color:var(--ok);border-color:rgba(70,227,154,.4);background:rgba(70,227,154,.1)}
+.tag.warn{color:var(--warn);border-color:rgba(240,180,41,.4);background:rgba(240,180,41,.1)}
+.tag.bad{color:var(--bad);border-color:rgba(229,120,107,.45);background:rgba(229,120,107,.12)}
+
+.vol{font-family:var(--mono);font-weight:700;font-size:26px;letter-spacing:-.01em}
+.vol span{font-size:12px;color:var(--ink-3);font-weight:400;margin-left:6px}
+.track{height:7px;border-radius:4px;background:rgba(255,255,255,.08);overflow:hidden;position:relative}
+.track i{display:block;height:100%;border-radius:4px;background:linear-gradient(90deg,var(--violet),var(--violet-lit));
+  transition:width .35s ease}
+.scope[data-s="warn"] .track i{background:linear-gradient(90deg,#C98A12,var(--warn))}
+.scope[data-s="bad"] .track i{background:linear-gradient(90deg,#B4483A,var(--bad))}
+.meta{display:flex;justify-content:space-between;font-family:var(--mono);font-size:10.5px;color:var(--ink-3)}
+
+.fc{border-top:1px solid var(--edge);padding-top:11px;display:flex;flex-direction:column;gap:8px}
+.fc .line{display:flex;justify-content:space-between;align-items:baseline;font-size:12.5px}
+.fc .line b{font-family:var(--mono);font-size:13px}
+.fc .line span{color:var(--ink-3)}
+.fc .warnline{font-size:12px;line-height:1.55;color:var(--warn)}
+.fc .okline{font-size:12px;line-height:1.55;color:var(--ink-2)}
+.slide{display:flex;align-items:center;gap:10px}
+.slide input{flex:1;accent-color:var(--violet-lit)}
+.slide code{font-family:var(--mono);font-size:11px;color:var(--violet-lit);min-width:52px;text-align:right}
+
+/* --- matice --- */
+.mtx{border:1px solid var(--edge);border-radius:18px;background:var(--panel);overflow-x:auto}
+table{border-collapse:collapse;width:100%;min-width:620px}
+th,td{padding:12px 14px;text-align:left;font-size:13px;border-bottom:1px solid var(--edge)}
+thead th{font-family:var(--mono);font-size:9.5px;letter-spacing:.12em;text-transform:uppercase;
+  color:var(--ink-3);font-weight:400;background:var(--panel2)}
+tbody tr:last-child td{border-bottom:0}
+td.who b{display:block;font-size:13.5px}
+td.who span{font-family:var(--mono);font-size:10px;color:var(--ink-3)}
+.cellbtn{border:1px solid var(--edge);background:var(--void);border-radius:9px;padding:7px 10px;cursor:pointer;
+  font-family:var(--mono);font-size:10px;letter-spacing:.06em;color:var(--ink-3);min-width:92px;text-align:center}
+.cellbtn[data-v="a"]{color:var(--ok);border-color:rgba(70,227,154,.35);background:rgba(70,227,154,.08)}
+.cellbtn[data-v="i"]{color:var(--violet-lit);border-color:rgba(157,92,246,.4);background:rgba(157,92,246,.1)}
+.cellbtn[data-v="b"]{color:var(--ink);border-color:var(--edge-hot);
+  background:linear-gradient(135deg,rgba(157,92,246,.16),rgba(70,227,154,.12))}
+.legend{display:flex;gap:14px;flex-wrap:wrap;font-family:var(--mono);font-size:10px;color:var(--ink-3);
+  margin-top:10px;letter-spacing:.06em}
+.legend b{color:var(--ink-2);font-weight:400}
+
+/* --- upozornění --- */
+.alerts{display:flex;flex-direction:column;gap:9px}
+.alert{display:flex;gap:12px;align-items:flex-start;border-radius:14px;padding:13px 15px;font-size:13px;line-height:1.55;
+  border:1px solid}
+.alert.warn{border-color:rgba(240,180,41,.32);background:rgba(240,180,41,.07)}
+.alert.bad{border-color:rgba(229,120,107,.35);background:rgba(229,120,107,.08)}
+.alert.ok{border-color:rgba(70,227,154,.28);background:rgba(70,227,154,.06)}
+.alert i{font-family:var(--mono);font-size:11px;font-style:normal;flex:none;padding-top:1px}
+.alert b{display:block;font-family:var(--disp);font-size:14px;margin-bottom:3px}
+.alert span{color:var(--ink-2)}
+.foot{font-family:var(--mono);font-size:10px;color:var(--ink-3);line-height:1.8;text-align:center;
+  border-top:1px solid var(--edge);padding-top:18px}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <div>
+      <div class="eyebrow">Mooncher · správa schématu</div>
+      <h1>Konzole sítě</h1>
+      <p>Každý akceptační okruh je samostatná omezená síť s vlastním stropem. Konzole hlídá, jak daleko je od něj — a kdy je čas okruh rozdělit.</p>
+    </div>
+    <div class="rate">strop 1 000 000 € / 12 měsíců<br>≈ 25 000 000 Kč při kurzu 25,00</div>
+  </header>
+
+  <section>
+    <h2>Akceptační okruhy</h2>
+    <div class="grid" id="scopes"></div>
+  </section>
+
+  <section>
+    <h2>Kdo do čeho vydává a co přijímá</h2>
+    <div class="mtx"><table id="matrix"></table></div>
+    <div class="legend">
+      <b>—</b> mimo okruh &nbsp;·&nbsp; <b style="color:var(--violet-lit)">vydává</b> jen vydavatel
+      &nbsp;·&nbsp; <b style="color:var(--ok)">přijímá</b> jen akceptant &nbsp;·&nbsp; <b>obojí</b> vydává i přijímá
+      &nbsp;·&nbsp; klikáním se stav mění
+    </div>
+  </section>
+
+  <section>
+    <h2>Co s tím teď</h2>
+    <div class="alerts" id="alerts"></div>
+  </section>
+
+  <p class="foot">Demo · data jen v paměti prohlížeče<br>Strop je orientační, skutečný výpočet i výjimka se řídí zákonem o platebním styku.</p>
+</div>
+
+<script>
+const $=id=>document.getElementById(id);
+const CZK=n=>Math.round(n).toLocaleString('cs-CZ');
+const LIMIT=25000000;         // 1 mil. € v Kč
+const MONTHS=['ledna','února','března','dubna','května','června','července','srpna','září','října','listopadu','prosince'];
+
+const SCOPES=[
+  {k:'wellness',name:'Lázně a wellness',note:'ubytování, procedury, masáže',vol:18400000,growth:6},
+  {k:'gastro',  name:'Stravování',      note:'restaurace, kavárny, bary',   vol:4100000, growth:3},
+  {k:'charita', name:'Charitativní pomoc',note:'dary a podpora příběhů',    vol:1250000, growth:12}
+];
+
+const MERCHANTS=[
+  {name:'Hotel Royal',        sub:'recepce · 2 terminály', m:{wellness:'b',gastro:'a',charita:'-'}},
+  {name:'Lázně Mariánské',    sub:'3 provozovny',          m:{wellness:'b',gastro:'a',charita:'-'}},
+  {name:'Café Luna',          sub:'1 provozovna',          m:{wellness:'-',gastro:'b',charita:'-'}},
+  {name:'Penzion U Lípy',     sub:'1 terminál',            m:{wellness:'a',gastro:'a',charita:'-'}},
+  {name:'Golden Blot',        sub:'nadační fond',          m:{wellness:'-',gastro:'-',charita:'i'}},
+  {name:'Wellness Klub Ostrava',sub:'2 terminály',         m:{wellness:'a',gastro:'-',charita:'a'}}
+];
+
+const CYCLE={'-':'i','i':'a','a':'b','b':'-'};
+const LABEL={'-':'—','i':'vydává','a':'přijímá','b':'obojí'};
+
+/* měsíců do stropu při daném měsíčním růstu */
+function monthsToLimit(vol,growth){
+  if(vol>=LIMIT) return 0;
+  if(growth<=0) return Infinity;
+  const g=1+growth/100;
+  return Math.log(LIMIT/vol)/Math.log(g);
+}
+function whenText(m){
+  if(m===0) return 'strop je překročen už teď';
+  if(!isFinite(m)) return 'při nulovém růstu strop nehrozí';
+  const d=new Date(); d.setMonth(d.getMonth()+Math.floor(m));
+  return MONTHS[d.getMonth()]+' '+d.getFullYear();
+}
+function statusOf(vol,months){
+  if(vol>=LIMIT) return 'bad';
+  if(months<=9) return 'warn';
+  return 'ok';
+}
+
+function paintScopes(){
+  $('scopes').innerHTML=SCOPES.map((s,i)=>{
+    const m=monthsToLimit(s.vol,s.growth);
+    const st=statusOf(s.vol,m);
+    const pct=Math.min(100,s.vol/LIMIT*100);
+    const issuers=MERCHANTS.filter(x=>['i','b'].includes(x.m[s.k])).length;
+    const accept =MERCHANTS.filter(x=>['a','b'].includes(x.m[s.k])).length;
+    return '<div class="scope" data-s="'+st+'">'+
+      '<div class="t"><div><b>'+s.name+'</b><small>'+s.note+'</small></div>'+
+        '<span class="tag '+st+'">'+(st==='bad'?'nad stropem':st==='warn'?'blíží se':'v pořádku')+'</span></div>'+
+      '<div><div class="vol">'+CZK(s.vol)+'<span>Kč / 12 měsíců</span></div>'+
+      '<div class="track" style="margin-top:9px"><i style="width:'+pct+'%"></i></div>'+
+      '<div class="meta" style="margin-top:7px"><span>'+pct.toFixed(1)+' % stropu</span>'+
+      '<span>zbývá '+CZK(Math.max(0,LIMIT-s.vol))+' Kč</span></div></div>'+
+      '<div class="fc">'+
+        '<div class="line"><span>Vydavatelů / akceptantů</span><b>'+issuers+' / '+accept+'</b></div>'+
+        '<div class="slide"><span style="font-size:11.5px;color:var(--ink-3)">růst</span>'+
+          '<input type="range" min="0" max="20" step="1" value="'+s.growth+'" data-i="'+i+'">'+
+          '<code>'+s.growth+' %/měs</code></div>'+
+        '<div class="line"><span>Strop narazí</span><b>'+whenText(m)+'</b></div>'+
+        (st==='ok'
+          ? '<div class="okline">Prostoru je zatím dost. Sledovat stačí jednou měsíčně.</div>'
+          : st==='warn'
+            ? '<div class="warnline">Zbývá zhruba '+Math.floor(m)+' měsíců. Rozdělte okruh, nebo začněte řešit registraci — obojí trvá déle než ta doba.</div>'
+            : '<div class="warnline">Okruh přestal být omezenou sítí. Nové provozovny do něj nepřidávejte, dokud se to nevyřeší.</div>')+
+      '</div></div>';
+  }).join('');
+
+  $('scopes').querySelectorAll('input[type=range]').forEach(r=>{
+    r.oninput=e=>{ SCOPES[e.target.dataset.i].growth=Number(e.target.value); paintScopes(); paintAlerts(); };
+  });
+}
+
+function paintMatrix(){
+  $('matrix').innerHTML=
+    '<thead><tr><th>Subjekt</th>'+SCOPES.map(s=>'<th>'+s.name+'</th>').join('')+'</tr></thead><tbody>'+
+    MERCHANTS.map((x,mi)=>'<tr><td class="who"><b>'+x.name+'</b><span>'+x.sub+'</span></td>'+
+      SCOPES.map(s=>'<td><button class="cellbtn" data-v="'+x.m[s.k]+'" data-m="'+mi+'" data-k="'+s.k+'">'+
+        LABEL[x.m[s.k]]+'</button></td>').join('')+'</tr>').join('')+'</tbody>';
+}
+$('matrix').onclick=e=>{
+  const b=e.target.closest('.cellbtn'); if(!b) return;
+  const m=MERCHANTS[b.dataset.m];
+  m.m[b.dataset.k]=CYCLE[m.m[b.dataset.k]];
+  paintMatrix(); paintScopes(); paintAlerts();
+};
+
+function paintAlerts(){
+  const out=[];
+  SCOPES.forEach(s=>{
+    const m=monthsToLimit(s.vol,s.growth), st=statusOf(s.vol,m);
+    if(st==='bad') out.push(['bad','!','Okruh '+s.name+' je nad stropem',
+      'Objem za posledních dvanáct měsíců překročil hranici omezené sítě. Buď se okruh rozdělí podle kategorie služby, nebo je potřeba ohlášení a registrace.']);
+    else if(st==='warn') out.push(['warn','~','Okruh '+s.name+' narazí na strop '+whenText(m),
+      'Zbývá '+Math.floor(m)+' měsíců. Rozdělení okruhu je levnější než registrace, ale musí se stihnout dřív, než objem doroste.']);
+  });
+  SCOPES.forEach(s=>{
+    const acc=MERCHANTS.filter(x=>['a','b'].includes(x.m[s.k])).length;
+    const iss=MERCHANTS.filter(x=>['i','b'].includes(x.m[s.k])).length;
+    if(iss===0 && acc===0) out.push(['bad','!','Okruh '+s.name+' je opuštěný',
+      'Nikdo do něj nevydává ani ho nepřijímá, ale za posledních dvanáct měsíců v něm proteklo '+CZK(s.vol)+
+      ' Kč. Už vydané vouchery zůstávají platné a nemají je kde uplatnit — buď okruh obnovte, nebo držitelům nabídněte převod jinam.']);
+    else if(iss>0 && acc===0) out.push(['warn','×','V okruhu '+s.name+' není kde uplatnit',
+      'Někdo do něj vydává, ale žádná provozovna ho nepřijímá. Držitelé mají voucher, který nikde neuplatní.']);
+    else if(acc>0 && iss===0) out.push(['warn','×','Do okruhu '+s.name+' nikdo nevydává',
+      'Provozovny ho přijímají, ale nikdo do něj vouchery nevydává. Akceptace běží naprázdno.']);
+  });
+  const single=MERCHANTS.filter(x=>Object.values(x.m).filter(v=>v!=='-').length===1 && Object.values(x.m).includes('b'));
+  if(single.length) out.push(['ok','i','Uzavřené okruhy u '+single.length+' subjektů',
+    'Vydávají i přijímají jen ve vlastním okruhu. To je nejbezpečnější režim — voucher neopouští síť, ve které vznikl.']);
+  if(!out.length) out.push(['ok','✓','Síť je v pořádku','Žádný okruh se nepřibližuje stropu a všechny mají vydavatele i akceptanty.']);
+  $('alerts').innerHTML=out.map(([c,ic,t,d])=>
+    '<div class="alert '+c+'"><i>'+ic+'</i><div><b>'+t+'</b><span>'+d+'</span></div></div>').join('');
+}
+
+paintScopes(); paintMatrix(); paintAlerts();
+</script>
+</body>
+</html>

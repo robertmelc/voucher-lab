@@ -1,0 +1,565 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#0A0912">
+<title>Voucherový terminál</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600..800&family=DM+Sans:wght@400;500;700&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --void:#0A0912; --panel:#16132A; --panel2:#1F1A38; --key:#241E42;
+  --edge:rgba(255,255,255,.09); --edge-hot:rgba(255,255,255,.17);
+  --violet:#9D5CF6; --violet-lit:#C084FC;
+  --ok:#46E39A; --warn:#F0B429; --bad:#E5786B;
+  --ink:#F2EEFA; --ink-2:#9A8CBB; --ink-3:#5F5382;
+  --mono:'JetBrains Mono',ui-monospace,monospace;
+  --disp:'Bricolage Grotesque',system-ui,sans-serif;
+  --body:'DM Sans',system-ui,sans-serif;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;min-height:100%}
+body{background:radial-gradient(130% 55% at 50% -8%,rgba(157,92,246,.18),transparent 60%),var(--void);
+  color:var(--ink);font-family:var(--body);display:flex;justify-content:center;
+  padding:env(safe-area-inset-top) 0 env(safe-area-inset-bottom)}
+.term{width:100%;max-width:430px;padding:16px 16px 28px;display:flex;flex-direction:column;gap:14px}
+
+/* ---- lišta provozovny ---- */
+.bar{display:flex;align-items:center;gap:10px;padding:11px 13px;border:1px solid var(--edge);
+  border-radius:14px;background:linear-gradient(180deg,var(--panel2),var(--panel))}
+.bar .mark{width:28px;height:28px;border-radius:8px;flex:none;display:grid;place-items:center;
+  background:linear-gradient(140deg,var(--violet),#5B21B6);font-family:var(--disp);font-weight:800;font-size:13px}
+.bar .who{flex:1;min-width:0}
+.bar .who b{display:block;font-family:var(--disp);font-size:14px;line-height:1.1}
+.bar .who span{font-family:var(--mono);font-size:9px;letter-spacing:.1em;color:var(--ink-3);text-transform:uppercase}
+.link{border:1px solid var(--edge);background:rgba(70,227,154,.1);color:var(--ok);border-radius:9px;
+  padding:6px 9px;font-family:var(--mono);font-size:9px;letter-spacing:.1em;text-transform:uppercase;cursor:pointer}
+.link.off{background:rgba(240,180,41,.12);color:var(--warn);border-color:rgba(240,180,41,.35)}
+
+.tabs{display:grid;grid-template-columns:1fr 1fr;gap:6px;background:var(--panel);border:1px solid var(--edge);
+  border-radius:14px;padding:5px}
+.tabs button{border:0;background:none;color:var(--ink-3);border-radius:10px;padding:11px 0;cursor:pointer;
+  font-family:var(--body);font-size:13px;font-weight:700}
+.tabs button.on{background:var(--key);color:var(--ink);box-shadow:0 1px 0 rgba(255,255,255,.06) inset}
+.opts{display:grid;gap:7px;margin-bottom:12px}
+.opt{display:flex;align-items:center;gap:10px;border:1px solid var(--edge);background:var(--void);
+  border-radius:12px;padding:11px 13px;cursor:pointer}
+.opt.on{border-color:var(--violet);background:rgba(157,92,246,.12)}
+.opt b{font-size:13px;flex:1}
+.opt small{font-family:var(--mono);font-size:10px;color:var(--ink-3)}
+.opt i{width:14px;height:14px;border-radius:50%;border:2px solid var(--ink-3);flex:none}
+.opt.on i{border-color:var(--violet-lit);background:var(--violet-lit);box-shadow:inset 0 0 0 3px var(--void)}
+.qrwrap{display:grid;place-items:center;background:#fff;border-radius:14px;padding:14px;margin:12px 0}
+.qrwrap img,.qrwrap canvas{display:block}
+.scopes{display:flex;gap:6px;flex-wrap:wrap}
+.chip{font-family:var(--mono);font-size:9px;letter-spacing:.09em;text-transform:uppercase;
+  border:1px solid rgba(157,92,246,.35);background:rgba(157,92,246,.12);color:var(--violet-lit);
+  border-radius:999px;padding:4px 9px}
+
+/* ---- částka ---- */
+.amount{border:1px solid var(--edge);border-radius:18px;background:linear-gradient(180deg,var(--panel2),var(--panel));
+  padding:18px 18px 14px;text-align:right;position:relative;overflow:hidden}
+.amount .lab{font-family:var(--mono);font-size:9.5px;letter-spacing:.18em;text-transform:uppercase;
+  color:var(--ink-3);text-align:left}
+.amount .val{font-family:var(--mono);font-weight:700;font-size:clamp(34px,11vw,46px);line-height:1.15;
+  letter-spacing:-.02em;margin-top:6px}
+.amount .val.zero{color:var(--ink-3)}
+.amount .cur{font-size:.5em;color:var(--ink-2);margin-left:6px}
+
+.pad{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.pad button{border:1px solid var(--edge);background:var(--key);color:var(--ink);border-radius:13px;
+  padding:16px 0;font-family:var(--mono);font-size:19px;font-weight:700;cursor:pointer}
+.pad button:active{background:var(--panel2);transform:translateY(1px)}
+.pad button.aux{font-size:13px;color:var(--ink-2)}
+
+.go{border:0;border-radius:15px;padding:17px;font-size:15px;font-weight:800;font-family:var(--body);
+  background:var(--ok);color:#052718;cursor:pointer;width:100%}
+.go:disabled{background:var(--key);color:var(--ink-3);cursor:not-allowed}
+
+/* ---- překryv skenování ---- */
+.sheet{position:fixed;inset:0;z-index:50;background:rgba(6,5,12,.94);backdrop-filter:blur(6px);
+  display:none;align-items:center;justify-content:center;padding:16px}
+.sheet.on{display:flex}
+.card{width:100%;max-width:400px;background:linear-gradient(180deg,var(--panel2),var(--panel));
+  border:1px solid var(--edge-hot);border-radius:20px;padding:18px;max-height:92vh;overflow:auto}
+.card h3{font-family:var(--disp);font-size:17px;margin:0 0 4px}
+.card p.hint{font-size:12.5px;color:var(--ink-2);margin:0 0 14px;line-height:1.55}
+.cam{position:relative;aspect-ratio:1;border-radius:15px;overflow:hidden;background:#05040A;border:1px solid var(--edge)}
+.cam video{width:100%;height:100%;object-fit:cover;display:block}
+.cam canvas{display:none}
+.ret{position:absolute;inset:15%;pointer-events:none}
+.ret span{position:absolute;width:26px;height:26px;border:2.5px solid var(--violet-lit)}
+.ret span:nth-child(1){top:0;left:0;border-right:0;border-bottom:0;border-radius:7px 0 0 0}
+.ret span:nth-child(2){top:0;right:0;border-left:0;border-bottom:0;border-radius:0 7px 0 0}
+.ret span:nth-child(3){bottom:0;left:0;border-right:0;border-top:0;border-radius:0 0 0 7px}
+.ret span:nth-child(4){bottom:0;right:0;border-left:0;border-top:0;border-radius:0 0 7px 0}
+.row2{display:flex;gap:8px;margin-top:12px}
+.row2 input{flex:1;min-width:0;background:var(--void);border:1px solid var(--edge);border-radius:12px;
+  padding:13px;color:var(--ink);font-family:var(--mono);font-size:14px;text-transform:uppercase}
+.row2 input::placeholder{color:var(--ink-3);text-transform:none}
+.btn{border:1px solid var(--edge-hot);background:rgba(255,255,255,.05);color:var(--ink);border-radius:12px;
+  padding:13px 16px;font-size:13px;font-weight:700;cursor:pointer;font-family:var(--body)}
+.btn.pri{background:var(--ok);color:#052718;border-color:transparent}
+.btn.gho{background:none;color:var(--ink-2)}
+.btn.full{width:100%}
+
+/* ---- výsledek / účtenka ---- */
+.slip{border-radius:18px;overflow:hidden;border:1px solid var(--edge)}
+.slip .head{padding:16px 18px;display:flex;align-items:center;gap:12px}
+.slip .head .glyph{width:38px;height:38px;border-radius:11px;display:grid;place-items:center;
+  font-size:20px;font-weight:800;flex:none}
+.slip .head b{font-family:var(--disp);font-size:19px;display:block;line-height:1.1}
+.slip .head span{font-family:var(--mono);font-size:10px;letter-spacing:.12em;text-transform:uppercase;opacity:.85}
+.slip[data-r="ok"] .head{background:linear-gradient(135deg,rgba(70,227,154,.22),rgba(70,227,154,.06))}
+.slip[data-r="ok"] .head .glyph{background:var(--ok);color:#052718}
+.slip[data-r="no"] .head{background:linear-gradient(135deg,rgba(229,120,107,.22),rgba(229,120,107,.06))}
+.slip[data-r="no"] .head .glyph{background:var(--bad);color:#2A0C08}
+.slip[data-r="q"] .head{background:linear-gradient(135deg,rgba(240,180,41,.22),rgba(240,180,41,.06))}
+.slip[data-r="q"] .head .glyph{background:var(--warn);color:#2B1D02}
+.slip .body{background:var(--panel);padding:14px 18px 18px}
+.kv{display:flex;justify-content:space-between;gap:12px;padding:7px 0;border-bottom:1px dashed var(--edge);
+  font-family:var(--mono);font-size:11.5px}
+.kv:last-of-type{border-bottom:0}
+.kv b{color:var(--ink);font-weight:700;text-align:right;word-break:break-all}
+.kv span{color:var(--ink-3)}
+.note{font-size:12.5px;color:var(--ink-2);line-height:1.55;margin:10px 0 0}
+
+/* ---- deník ---- */
+.jr h2{font-family:var(--mono);font-size:9.5px;letter-spacing:.18em;text-transform:uppercase;color:var(--ink-3);
+  margin:0 0 10px;display:flex;justify-content:space-between;align-items:center}
+.jr h2 button{background:none;border:0;color:var(--violet-lit);font:inherit;letter-spacing:.1em;cursor:pointer;padding:0}
+.tx{display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid var(--edge)}
+.tx:last-child{border-bottom:0}
+.tx i{width:6px;height:22px;border-radius:2px;flex:none;background:var(--ok)}
+.tx.q i{background:var(--warn)} .tx.v i{background:var(--ink-3)}
+.tx .c{flex:1;min-width:0}
+.tx .c b{display:block;font-family:var(--mono);font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tx .c span{font-size:10.5px;color:var(--ink-3)}
+.tx .amt{font-family:var(--mono);font-size:13px;font-weight:700;flex:none}
+.tx.v .amt{text-decoration:line-through;color:var(--ink-3)}
+.empty{font-size:12.5px;color:var(--ink-3);line-height:1.6;margin:0}
+
+.tot{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-top:12px}
+.tot div{background:var(--panel);border:1px solid var(--edge);border-radius:12px;padding:10px}
+.tot span{display:block;font-family:var(--mono);font-size:8.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-3)}
+.tot b{display:block;font-family:var(--mono);font-size:15px;margin-top:3px}
+
+details.help{border:1px solid var(--edge);border-radius:13px;background:var(--panel);padding:12px 14px}
+details.help summary{cursor:pointer;font-family:var(--mono);font-size:10px;letter-spacing:.14em;
+  text-transform:uppercase;color:var(--ink-2)}
+details.help table{width:100%;border-collapse:collapse;margin-top:10px;font-size:11.5px}
+details.help td{padding:5px 0;border-bottom:1px solid var(--edge);vertical-align:top}
+details.help td:first-child{font-family:var(--mono);color:var(--violet-lit);white-space:nowrap;padding-right:10px}
+details.help td:last-child{color:var(--ink-2)}
+.foot{font-family:var(--mono);font-size:10px;color:var(--ink-3);text-align:center;line-height:1.7}
+button:focus-visible,input:focus-visible,summary:focus-visible{outline:2px solid var(--violet-lit);outline-offset:2px}
+</style>
+</head>
+<body>
+<div class="term">
+
+  <div class="bar">
+    <div class="mark">R</div>
+    <div class="who"><b>Hotel Royal — recepce</b><span id="tid">TERM 0042 · MID 8801</span></div>
+    <button class="link" id="link">● Online</button>
+  </div>
+  <div class="tabs">
+    <button id="tabAcc" class="on">Přijmout voucher</button>
+    <button id="tabIss">Vydat voucher</button>
+  </div>
+  <div class="scopes" id="scopes"></div>
+
+  <div class="amount">
+    <div class="lab">Částka k úhradě</div>
+    <div class="val zero" id="amt">0<span class="cur">Kč</span></div>
+  </div>
+
+  <div class="pad" id="pad"></div>
+  <button class="go" id="go" disabled>Načíst voucher</button>
+
+  <div id="result"></div>
+
+  <div class="jr">
+    <h2>Deník terminálu <button id="close" hidden>Uzávěrka</button></h2>
+    <div id="txs"><p class="empty">Zatím žádná transakce. Zadejte částku a načtěte voucher.</p></div>
+    <div class="tot">
+      <div><span>Vydáno</span><b id="tCount">0</b></div>
+      <div><span>Uplatněno</span><b id="tSum">0</b></div>
+      <div><span>Saldo</span><b id="tOff">0</b></div>
+    </div>
+  </div>
+
+  <details class="help">
+    <summary>Testovací vouchery a chybové kódy</summary>
+    <table id="helpTable"></table>
+  </details>
+
+  <p class="foot">Demo terminál · autorizace běží lokálně<br>data jen v paměti prohlížeče</p>
+</div>
+
+<div class="sheet" id="issueSheet">
+  <div class="card">
+    <h3>Vydat voucher</h3>
+    <p class="hint">Hodnota <b id="issueAmt"></b>. Voucher vznikne jako virtuální — bez plastu, bez skladu.</p>
+    <div class="opts" id="progOpts"></div>
+    <div class="opts" id="valOpts"></div>
+    <div class="opts" id="delOpts"></div>
+    <button class="btn pri full" id="doIssue">Vydat</button>
+    <div class="row2"><button class="btn gho full" id="issueCancel">Zrušit</button></div>
+  </div>
+</div>
+
+<!-- překryv -->
+<div class="sheet" id="sheet">
+  <div class="card">
+    <h3>Načtěte voucher</h3>
+    <p class="hint" id="sheetHint">Namiřte kameru na QR kód voucheru, nebo kód opište.</p>
+    <div class="cam">
+      <video id="video" playsinline muted></video><canvas id="canvas"></canvas>
+      <div class="ret"><span></span><span></span><span></span><span></span></div>
+    </div>
+    <div class="row2">
+      <input id="code" placeholder="Kód voucheru" autocomplete="off" spellcheck="false">
+      <button class="btn pri" id="auth">Autorizovat</button>
+    </div>
+    <div class="row2"><button class="btn gho full" id="cancel">Zrušit</button></div>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jsQR/1.4.0/jsQR.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script>
+const $=id=>document.getElementById(id);
+const fmt=n=>n.toLocaleString('cs-CZ');
+
+/* ================= AKCEPTAČNÍ MODEL ================= */
+/* Provozovna přijímá jen okruhy, do kterých je zapsaná.
+   Okruh drží voucher, ne vydavatel — jeden vydavatel může mít vouchery ve víc okruzích. */
+const OKRUHY={wellness:'Lázně a wellness', gastro:'Stravování', charita:'Charitativní pomoc'};
+
+const TERMINAL={
+  merchant:'Hotel Royal — recepce', mid:'8801', tid:'0042',
+  accepts:['wellness','gastro'],
+  issues:['wellness'],        // do kterých okruhů smí provozovna vydávat
+  prefix:'ROY',
+  floorLimit:500          // do této částky terminál rozhodne sám, když nejede spojení
+};
+
+/* Testovací "hostitelská" databáze */
+const HOST={
+  'SPA-GIFT-3001':{issuer:'Lázně Mariánské',okruh:'wellness',balance:5000,expires:'2027-06-30',status:'ok'},
+  'SPA-GIFT-3002':{issuer:'Lázně Mariánské',okruh:'wellness',balance:1200,expires:'2025-12-31',status:'ok'},
+  'LUNA-GIFT-1001':{issuer:'Café Luna',okruh:'gastro',balance:1500,expires:'2027-03-31',status:'ok'},
+  'LUNA-GIFT-1002':{issuer:'Café Luna',okruh:'gastro',balance:180,expires:'2027-03-31',status:'ok'},
+  'GB-AMB-0001':{issuer:'Golden Blot',okruh:'charita',balance:800,expires:'2027-07-30',status:'ok'},
+  'ROY-GIFT-4001':{issuer:'Hotel Royal',okruh:'wellness',balance:2500,expires:'2027-12-31',status:'blocked'}
+};
+
+const REASONS={
+  '00':'Schváleno','12':'Neznámý voucher','33':'Platnost vypršela',
+  '51':'Nedostatečný zůstatek','57':'Okruh mimo akceptaci provozovny',
+  '62':'Voucher blokován vydavatelem','91':'Autorizační centrum nedostupné'
+};
+
+/* ================= STAV ================= */
+let amount=0, online=true, journal=[], pending=null, seq=1;
+let mode='accept', issueProg='wellness', issueVal=12, issueDel='sms', issueSeq=5000;
+
+/* ================= AUTORIZACE ================= */
+function authorize(raw, amt){
+  const code=normalize(raw);
+  if(!code) return {ok:false,rc:'12'};
+
+  if(!online){
+    // offline: terminál rozhoduje podle floor limitu, transakce jde do fronty
+    if(amt<=TERMINAL.floorLimit) return {ok:true,queued:true,rc:'00',code,auth:authCode()};
+    return {ok:false,rc:'91',code};
+  }
+
+  const v=HOST[code];
+  if(!v) return {ok:false,rc:'12',code};
+  if(v.status==='blocked') return {ok:false,rc:'62',code,v};
+  if(new Date(v.expires) < new Date()) return {ok:false,rc:'33',code,v};
+  if(!TERMINAL.accepts.includes(v.okruh)) return {ok:false,rc:'57',code,v};
+  if(v.balance < amt) return {ok:false,rc:'51',code,v,partial:v.balance};
+  return {ok:true,rc:'00',code,v,auth:authCode(),rest:v.balance-amt};
+}
+function normalize(s){ return (s||'').trim().toUpperCase().replace(/^.*\/(?:wallet|v)\//,'').replace(/[^A-Z0-9-]/g,''); }
+function authCode(){ return Math.random().toString(36).slice(2,8).toUpperCase(); }
+
+/* ================= KLÁVESNICE ================= */
+const keys=['1','2','3','4','5','6','7','8','9','C','0','←'];
+$('pad').innerHTML=keys.map(k=>'<button data-k="'+k+'"'+(/[C←]/.test(k)?' class="aux"':'')+'>'+k+'</button>').join('');
+$('pad').onclick=e=>{
+  const k=e.target.dataset.k; if(!k) return;
+  if(k==='C') amount=0;
+  else if(k==='←') amount=Math.floor(amount/10);
+  else if(amount<1000000) amount=amount*10+Number(k);
+  paintAmount();
+};
+function paintAmount(){
+  $('amt').innerHTML=fmt(amount)+'<span class="cur">Kč</span>';
+  $('amt').classList.toggle('zero',amount===0);
+  $('go').disabled=amount===0;
+  $('go').textContent = mode==='issue' ? 'Vydat voucher' : 'Načíst voucher';
+  document.querySelector('.amount .lab').textContent = mode==='issue' ? 'Hodnota voucheru' : 'Částka k úhradě';
+}
+
+/* ================= SPOJENÍ ================= */
+$('link').onclick=()=>{
+  online=!online;
+  $('link').textContent=online?'● Online':'● Offline';
+  $('link').classList.toggle('off',!online);
+};
+
+$('scopes').innerHTML=TERMINAL.accepts.map(s=>'<span class="chip">'+OKRUHY[s]+'</span>').join('')
+  +'<span class="chip" style="border-color:var(--edge);background:none;color:var(--ink-3)">limit '+TERMINAL.floorLimit+' Kč offline</span>';
+$('tid').textContent='TERM '+TERMINAL.tid+' · MID '+TERMINAL.mid;
+
+/* ================= TOK ================= */
+function setMode(m){
+  mode=m;
+  $('tabAcc').classList.toggle('on',m==='accept');
+  $('tabIss').classList.toggle('on',m==='issue');
+  clear();
+  paintAmount();
+}
+$('tabAcc').onclick=()=>setMode('accept');
+$('tabIss').onclick=()=>setMode('issue');
+
+$('go').onclick=()=>{
+  if(mode==='issue'){ openIssue(); return; }
+  $('sheet').classList.add('on'); $('code').value=''; startCam();
+};
+
+/* ---------- vydání voucheru ---------- */
+const VALIDITY=[[6,'6 měsíců'],[12,'12 měsíců'],[24,'24 měsíců']];
+const DELIVERY=[['sms','SMS na telefon'],['mail','E-mailem'],['print','Vytisknout na pultě']];
+
+function openIssue(){
+  $('issueAmt').textContent=fmt(amount)+' Kč';
+  $('progOpts').innerHTML=TERMINAL.issues.map(k=>opt('prog',k,OKRUHY[k],'okruh '+k,k===issueProg)).join('');
+  $('valOpts').innerHTML=VALIDITY.map(([v,l])=>opt('val',v,l,'platnost',v===issueVal)).join('');
+  $('delOpts').innerHTML=DELIVERY.map(([v,l])=>opt('del',v,l,'předání',v===issueDel)).join('');
+  $('issueSheet').classList.add('on');
+}
+function opt(g,v,label,sub,on){
+  return '<div class="opt'+(on?' on':'')+'" data-g="'+g+'" data-v="'+v+'"><i></i><b>'+label+'</b><small>'+sub+'</small></div>';
+}
+$('issueSheet').onclick=e=>{
+  const o=e.target.closest('.opt'); if(!o) return;
+  const g=o.dataset.g, v=o.dataset.v;
+  if(g==='prog') issueProg=v; if(g==='val') issueVal=Number(v); if(g==='del') issueDel=v;
+  o.parentNode.querySelectorAll('.opt').forEach(x=>x.classList.toggle('on',x===o));
+};
+$('issueCancel').onclick=()=>$('issueSheet').classList.remove('on');
+$('doIssue').onclick=()=>{
+  $('issueSheet').classList.remove('on');
+  const code=TERMINAL.prefix+'-GIFT-'+(issueSeq++);
+  const exp=new Date(); exp.setMonth(exp.getMonth()+issueVal);
+  HOST[code]={issuer:'Hotel Royal',okruh:issueProg,balance:amount,
+              expires:exp.toISOString().slice(0,10),status:'ok'};
+  renderIssued(code,amount,exp);
+  beep(true);
+};
+
+function renderIssued(code,amt,exp){
+  const rows=[
+    ['Kód voucheru',code],['Vydavatel','Hotel Royal'],['Okruh',OKRUHY[issueProg]],
+    ['Hodnota',fmt(amt)+' Kč'],['Platnost do',exp.toLocaleDateString('cs-CZ')],
+    ['Předání',DELIVERY.find(d=>d[0]===issueDel)[1]],
+    ['Terminál',TERMINAL.tid+' / MID '+TERMINAL.mid],
+    ['Čas',new Date().toLocaleString('cs-CZ')]
+  ];
+  $('result').innerHTML=
+    '<div class="slip" data-r="ok"><div class="head"><div class="glyph">+</div>'+
+    '<div><b>Voucher vydán</b><span>virtuální · bez plastu</span></div></div><div class="body">'+
+    '<div class="qrwrap"><div id="qrbox"></div></div>'+
+    rows.map(([k,v])=>'<div class="kv"><span>'+k+'</span><b>'+v+'</b></div>').join('')+
+    '<p class="note">Voucher je od této chvíle platný a lze ho hned uplatnit — zkuste přepnout na Přijmout voucher a naskenovat tenhle QR kód. '+
+    'Vydáním vznikl provozovně závazek, ne tržba; tržba nastane až uplatněním.</p>'+
+    '<div style="margin-top:12px"><button class="btn pri full" id="issueDone">Hotovo</button></div></div></div>';
+  try{ new QRCode($('qrbox'),{text:code,width:150,height:150,colorDark:'#111111',colorLight:'#ffffff'}); }
+  catch(e){ $('qrbox').innerHTML='<div style="font-family:var(--mono);color:#111;font-size:13px">'+code+'</div>'; }
+  $('issueDone').onclick=()=>{
+    journal.unshift({id:seq++,code,amt,queued:false,void:false,dir:'out',
+      at:new Date(),issuer:'Hotel Royal',auth:null});
+    paintJournal(); clear();
+  };
+}
+$('cancel').onclick=closeSheet;
+function closeSheet(){ $('sheet').classList.remove('on'); stopCam(); }
+$('auth').onclick=()=>submit($('code').value);
+$('code').addEventListener('keydown',e=>{ if(e.key==='Enter') submit($('code').value); });
+
+function submit(raw){
+  if(!raw.trim()) return;
+  closeSheet();
+  const r=authorize(raw,amount);
+  pending={...r,amount};
+  render(r);
+  beep(r.ok);
+}
+
+function render(r){
+  const state=r.ok?(r.queued?'q':'ok'):'no';
+  const title=r.ok?(r.queued?'Přijato offline':'Schváleno'):'Zamítnuto';
+  const glyph=r.ok?(r.queued?'⏱':'✓'):'✕';
+  const rows=[];
+  rows.push(['Kód voucheru', r.code||'—']);
+  if(r.v){ rows.push(['Vydavatel',r.v.issuer]); rows.push(['Okruh',OKRUHY[r.v.okruh]]); }
+  rows.push(['Částka', fmt(r.amount!==undefined?r.amount:amount)+' Kč']);
+  if(r.ok && !r.queued) rows.push(['Zbývá na voucheru', fmt(r.rest)+' Kč']);
+  if(r.auth) rows.push(['Autorizační kód', r.auth]);
+  rows.push(['Odpověď', r.rc+' · '+REASONS[r.rc]]);
+  rows.push(['Terminál', TERMINAL.tid+' / MID '+TERMINAL.mid]);
+  rows.push(['Čas', new Date().toLocaleString('cs-CZ')]);
+
+  let note='', acts='';
+  if(r.ok && !r.queued){
+    note='Peníze jsou rezervované. Potvrzením se odečtou z voucheru a připíšou provozovně.';
+    acts='<button class="btn pri full" id="capture">Potvrdit čerpání</button>'
+        +'<button class="btn gho full" id="void" style="margin-top:8px">Zrušit autorizaci</button>';
+  }else if(r.queued){
+    note='Autorizační centrum je nedostupné. Transakce je do limitu terminálu přijatá na jeho odpovědnost a odešle se, jakmile se spojení obnoví.';
+    acts='<button class="btn pri full" id="capture">Přijmout a zařadit do fronty</button>';
+  }else if(r.rc==='51'){
+    note='Na voucheru je '+fmt(r.partial)+' Kč. Lze čerpat tuto částku a zbytek doplatit jinak.';
+    acts='<button class="btn pri full" id="partial">Čerpat '+fmt(r.partial)+' Kč</button>'
+        +'<button class="btn gho full" id="dismiss" style="margin-top:8px">Zavřít</button>';
+  }else if(r.rc==='57'){
+    note='Voucher je platný, ale patří do okruhu, který tato provozovna nepřijímá. Rozšíření okruhu řeší vydavatel se správcem sítě.';
+    acts='<button class="btn gho full" id="dismiss">Zavřít</button>';
+  }else{
+    note='Transakce neproběhla. Zákazníkovi se nic neodečetlo.';
+    acts='<button class="btn gho full" id="dismiss">Zavřít</button>';
+  }
+
+  $('result').innerHTML=
+    '<div class="slip" data-r="'+state+'">'+
+      '<div class="head"><div class="glyph">'+glyph+'</div><div><b>'+title+'</b>'+
+      '<span>odpověď '+r.rc+'</span></div></div>'+
+      '<div class="body">'+rows.map(([k,v])=>'<div class="kv"><span>'+k+'</span><b>'+v+'</b></div>').join('')+
+      '<p class="note">'+note+'</p><div style="margin-top:12px">'+acts+'</div></div></div>';
+
+  const cap=$('capture'), par=$('partial'), dis=$('dismiss'), vd=$('void');
+  if(cap) cap.onclick=()=>capture(r.amount!==undefined?r.amount:amount, r);
+  if(par) par.onclick=()=>{ const a=r.partial; const rr=authorize(r.code,a); rr.amount=a; capture(a,rr); };
+  if(dis) dis.onclick=clear;
+  if(vd) vd.onclick=clear;
+}
+
+function capture(amt,r){
+  if(r.v && !r.queued) r.v.balance-=amt;
+  journal.unshift({id:seq++,code:r.code,amt,queued:!!r.queued,void:false,dir:'in',
+    at:new Date(),issuer:r.v?r.v.issuer:'—',auth:r.auth});
+  paintJournal(); clear();
+}
+function clear(){ $('result').innerHTML=''; amount=0; paintAmount(); }
+
+/* ================= DENÍK ================= */
+function paintJournal(){
+  const box=$('txs');
+  if(!journal.length){ box.innerHTML='<p class="empty">Zatím žádná transakce.</p>'; }
+  else box.innerHTML=journal.map(t=>
+    '<div class="tx'+(t.void?' v':(t.queued?' q':''))+'"><i></i><div class="c"><b>'+t.code+'</b>'+
+    '<span>'+t.issuer+' · '+t.at.toLocaleTimeString('cs-CZ',{hour:'2-digit',minute:'2-digit'})+
+    (t.queued?' · ve frontě':'')+(t.auth?' · '+t.auth:'')+'</span></div>'+
+    '<div class="amt">'+(t.dir==='out'?'+':'−')+fmt(t.amt)+' Kč</div>'+
+    (t.void?'':'<button class="btn gho" style="padding:6px 9px;font-size:11px" data-void="'+t.id+'">Storno</button>')+
+    '</div>').join('');
+  const live=journal.filter(t=>!t.void);
+  const out=live.filter(t=>t.dir==='out').reduce((s,t)=>s+t.amt,0);
+  const inn=live.filter(t=>t.dir==='in').reduce((s,t)=>s+t.amt,0);
+  $('tCount').textContent=fmt(out);
+  $('tSum').textContent=fmt(inn);
+  $('tOff').textContent=(out-inn>=0?'+':'')+fmt(out-inn);
+  $('close').hidden=!journal.length;
+}
+$('txs').onclick=e=>{
+  const id=e.target.dataset.void; if(!id) return;
+  const t=journal.find(x=>x.id==id); if(!t||t.void) return;
+  t.void=true;
+  const v=HOST[t.code];
+  if(v && !t.queued){ if(t.dir==='out') v.status='blocked'; else v.balance+=t.amt; }
+  paintJournal();
+};
+$('close').onclick=()=>{
+  const live=journal.filter(t=>!t.void);
+  const out=live.filter(t=>t.dir==='out'), inn=live.filter(t=>t.dir==='in');
+  const so=out.reduce((s,t)=>s+t.amt,0), si=inn.reduce((s,t)=>s+t.amt,0);
+  alert('Uzávěrka terminálu '+TERMINAL.tid+'\n\n'+
+    'Vydáno: '+out.length+' ks / '+fmt(so)+' Kč\n'+
+    'Uplatněno: '+inn.length+' ks / '+fmt(si)+' Kč\n'+
+    'Saldo závazků: '+(so-si>=0?'+':'')+fmt(so-si)+' Kč\n'+
+    'Ve frontě offline: '+inn.filter(t=>t.queued).length+'\n'+
+    'Storn: '+journal.filter(t=>t.void).length);
+};
+
+/* ================= NÁPOVĚDA ================= */
+$('helpTable').innerHTML=
+  Object.entries(HOST).map(([k,v])=>'<tr><td>'+k+'</td><td>'+v.issuer+' · '+OKRUHY[v.okruh]+
+    ' · '+fmt(v.balance)+' Kč'+(v.status==='blocked'?' · blokován':'')+
+    (new Date(v.expires)<new Date()?' · propadlý':'')+'</td></tr>').join('')
+  +'<tr><td>&nbsp;</td><td>&nbsp;</td></tr>'
+  +Object.entries(REASONS).map(([k,v])=>'<tr><td>'+k+'</td><td>'+v+'</td></tr>').join('');
+
+/* ================= KAMERA ================= */
+let stream=null,detector=null,raf=null;
+(async()=>{ if('BarcodeDetector' in window){ try{
+  const f=await BarcodeDetector.getSupportedFormats();
+  if(f.includes('qr_code')) detector=new BarcodeDetector({formats:['qr_code']});
+}catch(e){} } })();
+
+async function startCam(){
+  try{
+    stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:'environment'},audio:false});
+    $('video').srcObject=stream; await $('video').play(); loop();
+    $('sheetHint').textContent='Namiřte kameru na QR kód voucheru, nebo kód opište.';
+  }catch(e){
+    $('sheetHint').textContent='Kamera není dostupná (potřebuje HTTPS a povolení). Kód opište ručně.';
+  }
+}
+function stopCam(){ if(raf)cancelAnimationFrame(raf); if(stream)stream.getTracks().forEach(t=>t.stop()); stream=null; }
+async function loop(){
+  if(!stream) return;
+  const v=$('video');
+  if(v.readyState===v.HAVE_ENOUGH_DATA){
+    let hit=null;
+    if(detector){ try{ const c=await detector.detect(v); if(c.length) hit=c[0].rawValue; }catch(e){} }
+    else if(window.jsQR){
+      const w=v.videoWidth,h=v.videoHeight;
+      if(w&&h){ const s=Math.min(w,h),size=Math.min(s,600),cv=$('canvas'),cx=cv.getContext('2d',{willReadFrequently:true});
+        cv.width=size;cv.height=size;
+        cx.drawImage(v,(w-s)/2,(h-s)/2,s,s,0,0,size,size);
+        const d=cx.getImageData(0,0,size,size);
+        const r=jsQR(d.data,size,size,{inversionAttempts:'dontInvert'});
+        if(r&&r.data) hit=r.data;
+      }
+    }
+    if(hit){ submit(hit); return; }
+  }
+  raf=requestAnimationFrame(loop);
+}
+
+/* ================= ZVUK ================= */
+let ac=null;
+function beep(ok){
+  try{ ac=ac||new (window.AudioContext||window.webkitAudioContext)();
+    const seq=ok?[880]:[380,300];
+    seq.forEach((f,i)=>{ const o=ac.createOscillator(),g=ac.createGain();
+      o.frequency.value=f; o.type='sine';
+      const t=ac.currentTime+i*0.14;
+      g.gain.setValueAtTime(.0001,t); g.gain.exponentialRampToValueAtTime(.16,t+.01);
+      g.gain.exponentialRampToValueAtTime(.0001,t+.13);
+      o.connect(g).connect(ac.destination); o.start(t); o.stop(t+.15); });
+  }catch(e){}
+  if(navigator.vibrate) navigator.vibrate(ok?30:[25,45,25]);
+}
+
+paintAmount();
+</script>
+</body>
+</html>

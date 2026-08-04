@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#0A0912">
+<title>Voucher Lab — Mooncher</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600..800&family=DM+Sans:wght@400;500;700&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --void:#0A0912;--panel:#16132A;--panel2:#1F1A38;--edge:rgba(255,255,255,.09);--edge-hot:rgba(255,255,255,.18);
+  --violet:#9D5CF6;--violet-lit:#C084FC;--ok:#46E39A;--warn:#F0B429;
+  --ink:#F2EEFA;--ink-2:#9A8CBB;--ink-3:#5F5382;
+  --mono:'JetBrains Mono',ui-monospace,monospace;--disp:'Bricolage Grotesque',system-ui,sans-serif;--body:'DM Sans',system-ui,sans-serif;
+}
+*{box-sizing:border-box}
+body{margin:0;background:radial-gradient(115% 48% at 50% -6%,rgba(157,92,246,.18),transparent 58%),var(--void);
+  color:var(--ink);font-family:var(--body);min-height:100vh}
+.wrap{max-width:860px;margin:0 auto;padding:44px 20px 70px;display:flex;flex-direction:column;gap:32px}
+.eyebrow{font-family:var(--mono);font-size:10px;letter-spacing:.22em;text-transform:uppercase;color:var(--violet-lit)}
+h1{font-family:var(--disp);font-size:clamp(30px,6.5vw,46px);font-weight:800;letter-spacing:-.03em;margin:10px 0 0;line-height:1.05}
+.lede{font-size:15px;color:var(--ink-2);line-height:1.7;max-width:56ch;margin:14px 0 0}
+.lede b{color:var(--ink);font-weight:500}
+
+.flow{display:flex;align-items:center;gap:10px;flex-wrap:wrap;font-family:var(--mono);font-size:10.5px;
+  color:var(--ink-3);letter-spacing:.06em;border-top:1px solid var(--edge);border-bottom:1px solid var(--edge);padding:14px 0}
+.flow b{color:var(--violet-lit);font-weight:400}
+.flow i{font-style:normal;color:var(--ink-3);opacity:.5}
+
+.cards{display:grid;gap:14px}
+a.card{display:block;text-decoration:none;color:inherit;border:1px solid var(--edge);border-radius:20px;
+  background:linear-gradient(180deg,var(--panel2),var(--panel));padding:22px;position:relative;overflow:hidden;
+  transition:border-color .18s,transform .18s}
+a.card:hover{border-color:var(--edge-hot);transform:translateY(-2px)}
+a.card:focus-visible{outline:2px solid var(--violet-lit);outline-offset:3px}
+a.card::before{content:'';position:absolute;inset:0 0 auto;height:2px;background:var(--violet);opacity:.6}
+a.card[data-c="ok"]::before{background:var(--ok)}
+a.card[data-c="warn"]::before{background:var(--warn)}
+.card .no{font-family:var(--mono);font-size:10px;letter-spacing:.14em;color:var(--ink-3)}
+.card h2{font-family:var(--disp);font-size:22px;font-weight:800;margin:7px 0 0;letter-spacing:-.02em}
+.card p{font-size:13.5px;color:var(--ink-2);line-height:1.65;margin:9px 0 0;max-width:52ch}
+.tags{display:flex;gap:6px;flex-wrap:wrap;margin-top:14px}
+.tags span{font-family:var(--mono);font-size:9px;letter-spacing:.08em;text-transform:uppercase;
+  border:1px solid var(--edge);border-radius:999px;padding:4px 9px;color:var(--ink-3)}
+.go{position:absolute;right:20px;bottom:20px;font-family:var(--mono);font-size:11px;color:var(--violet-lit)}
+
+.note{border:1px solid rgba(240,180,41,.3);background:rgba(240,180,41,.06);border-radius:14px;padding:14px 16px;
+  font-size:13px;line-height:1.6;color:var(--ink-2)}
+.note b{color:var(--warn);display:block;font-family:var(--disp);font-size:14px;margin-bottom:4px}
+footer{font-family:var(--mono);font-size:10px;color:var(--ink-3);line-height:1.9;text-align:center;
+  border-top:1px solid var(--edge);padding-top:20px}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <div class="eyebrow">Mooncher · prototypy</div>
+    <h1>Voucher Lab</h1>
+    <p class="lede">Tři prototypy k jedné myšlence: voucher nemá být jen <b>vydaný</b>, ale i <b>přijímaný</b>. Vydávání je software, akceptace je síť — a tady je vidět, co k té síti patří.</p>
+  </header>
+
+  <div class="flow">
+    <b>vydání</b><i>→</i><b>peněženka</b><i>→</i><b>načtení</b><i>→</i><b>autorizace</b><i>→</i><b>uplatnění</b><i>→</i><b>zúčtování</b>
+  </div>
+
+  <div class="cards">
+
+    <a class="card" href="terminal.html" data-c="ok">
+      <div class="no">01</div>
+      <h2>Terminál</h2>
+      <p>Pult, který voucher vydá i přijme. Zadání částky, autorizace s rezervací a potvrzením, akceptační okruhy, chybové kódy, offline režim s limitem, deník a uzávěrka s rozpadem vydáno / uplatněno / saldo.</p>
+      <div class="tags"><span>akceptace</span><span>vydávání</span><span>QR</span><span>offline fronta</span></div>
+      <div class="go">otevřít →</div>
+    </a>
+
+    <a class="card" href="konzole.html">
+      <div class="no">02</div>
+      <h2>Konzole sítě</h2>
+      <p>Pravidla schématu. Kdo do kterého okruhu vydává a co přijímá, kolik v okruhu proteklo za dvanáct měsíců a kdy při současném tempu narazí na strop omezené sítě.</p>
+      <div class="tags"><span>okruhy</span><span>matice</span><span>strop</span><span>předpověď</span></div>
+      <div class="go">otevřít →</div>
+    </a>
+
+    <a class="card" href="ctecka.html" data-c="warn">
+      <div class="no">03</div>
+      <h2>Čtečka</h2>
+      <p>Nejjednodušší díl. Přečte QR a řekne, co v něm je — kód voucheru, pozvánka, peněženka, nebo něco cizího. Neptá se nikoho, takže neověřuje platnost. Předchůdce terminálu.</p>
+      <div class="tags"><span>čtení</span><span>rozpoznání</span><span>protokol</span></div>
+      <div class="go">otevřít →</div>
+    </a>
+
+  </div>
+
+  <div class="note">
+    <b>Kamera potřebuje HTTPS</b>
+    Na této adrese se spustí. Otevřené ze souboru na disku běží všechno kromě kamery — kódy se pak zadávají ručně. Testovací vouchery a chybové kódy najdete dole v terminálu.
+  </div>
+
+  <footer>
+    Prototypy · žádný server, data jen v paměti prohlížeče<br>
+    ROOMS MANAGEMENT s.r.o. · srpen 2026
+  </footer>
+</div>
+</body>
+</html>

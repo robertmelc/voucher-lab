@@ -1,0 +1,371 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#0B0A14">
+<title>Čtečka — bakaláři.app</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600..800&family=DM+Sans:wght@400;500;700&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --void:#0B0A14; --panel:#17142A; --panel2:#211B3A; --edge:rgba(255,255,255,.09);
+  --edge-hot:rgba(255,255,255,.16);
+  --violet:#9D5CF6; --violet-lit:#C084FC;
+  --signal:#46E39A; --warn:#F0B429; --bad:#E5786B;
+  --ink:#F2EEFA; --ink-2:#9A8CBB; --ink-3:#5F5382;
+  --mono:'JetBrains Mono',ui-monospace,monospace;
+  --disp:'Bricolage Grotesque',system-ui,sans-serif;
+  --body:'DM Sans',system-ui,sans-serif;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;height:100%}
+body{
+  background:
+    radial-gradient(120% 60% at 50% -10%, rgba(157,92,246,.20), transparent 62%),
+    var(--void);
+  color:var(--ink);font-family:var(--body);
+  min-height:100svh;display:flex;justify-content:center;
+  padding:env(safe-area-inset-top) 0 env(safe-area-inset-bottom);
+}
+.shell{width:100%;max-width:430px;display:flex;flex-direction:column;padding:18px 18px 26px;gap:16px}
+
+/* ---- hlavička ---- */
+.top{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.brand{display:flex;align-items:center;gap:10px;min-width:0}
+.mark{width:30px;height:30px;border-radius:9px;flex:none;display:grid;place-items:center;
+  background:linear-gradient(140deg,var(--violet),#5B21B6);
+  box-shadow:0 0 0 1px rgba(255,255,255,.12) inset, 0 8px 22px rgba(157,92,246,.35);
+  font-family:var(--disp);font-weight:800;font-size:15px;color:#fff}
+.brand b{font-family:var(--disp);font-weight:800;font-size:16px;letter-spacing:-.02em;display:block;line-height:1}
+.brand small{font-family:var(--mono);font-size:9px;letter-spacing:.18em;color:var(--ink-3);text-transform:uppercase;display:block;margin-top:4px}
+.state{font-family:var(--mono);font-size:9.5px;letter-spacing:.14em;text-transform:uppercase;
+  border:1px solid var(--edge);border-radius:999px;padding:5px 10px;color:var(--ink-2);white-space:nowrap;
+  display:flex;align-items:center;gap:6px}
+.state i{width:6px;height:6px;border-radius:50%;background:var(--ink-3);display:block}
+.state.live i{background:var(--signal);box-shadow:0 0 0 3px rgba(70,227,154,.18);animation:pulse 1.8s infinite}
+.state.err i{background:var(--bad)}
+@keyframes pulse{50%{opacity:.35}}
+
+/* ---- hledáček ---- */
+.finder{position:relative;aspect-ratio:1;border-radius:22px;overflow:hidden;background:#05040A;
+  border:1px solid var(--edge)}
+.finder video{width:100%;height:100%;object-fit:cover;display:block}
+.finder canvas{display:none}
+.veil{position:absolute;inset:0;display:grid;place-items:center;text-align:center;padding:26px;
+  background:rgba(5,4,10,.86);gap:10px;grid-auto-rows:min-content;align-content:center}
+.veil p{margin:0;font-size:13px;color:var(--ink-2);line-height:1.6}
+.veil strong{font-family:var(--disp);font-size:17px;color:var(--ink);display:block;margin-bottom:2px}
+
+/* rohové závorky */
+.reticle{position:absolute;inset:14%;pointer-events:none;transition:inset .18s cubic-bezier(.3,1.5,.5,1)}
+.reticle span{position:absolute;width:30px;height:30px;border:2.5px solid var(--violet-lit);
+  filter:drop-shadow(0 0 8px rgba(192,132,252,.55));transition:border-color .18s}
+.reticle span:nth-child(1){top:0;left:0;border-right:0;border-bottom:0;border-radius:8px 0 0 0}
+.reticle span:nth-child(2){top:0;right:0;border-left:0;border-bottom:0;border-radius:0 8px 0 0}
+.reticle span:nth-child(3){bottom:0;left:0;border-right:0;border-top:0;border-radius:0 0 0 8px}
+.reticle span:nth-child(4){bottom:0;right:0;border-left:0;border-top:0;border-radius:0 0 8px 0}
+.finder.lock .reticle{inset:9%}
+.finder.lock .reticle span{border-color:var(--signal);filter:drop-shadow(0 0 12px rgba(70,227,154,.8))}
+
+.sweep{position:absolute;left:14%;right:14%;height:2px;pointer-events:none;
+  background:linear-gradient(90deg,transparent,var(--violet-lit),transparent);
+  box-shadow:0 0 14px 2px rgba(157,92,246,.6);animation:sweep 2.6s ease-in-out infinite}
+@keyframes sweep{0%,100%{top:16%;opacity:.25}50%{top:82%;opacity:1}}
+.finder.lock .sweep{opacity:0}
+@media (prefers-reduced-motion:reduce){.sweep,.state.live i{animation:none}}
+
+.tools{position:absolute;left:0;right:0;bottom:0;padding:14px;display:flex;gap:8px;justify-content:center;
+  background:linear-gradient(transparent,rgba(5,4,10,.75))}
+.tool{border:1px solid var(--edge-hot);background:rgba(11,10,20,.62);backdrop-filter:blur(8px);
+  color:var(--ink);border-radius:11px;padding:9px 14px;font-family:var(--mono);font-size:10.5px;
+  letter-spacing:.1em;text-transform:uppercase;cursor:pointer}
+.tool:disabled{opacity:.35;cursor:not-allowed}
+.tool.on{border-color:var(--warn);color:var(--warn)}
+
+/* ---- odečet ---- */
+.readout{border:1px solid var(--edge);border-radius:20px;background:
+  linear-gradient(180deg,var(--panel2),var(--panel));padding:18px;min-height:150px;
+  display:flex;flex-direction:column;justify-content:center;gap:12px;position:relative;overflow:hidden}
+.readout::before{content:'';position:absolute;inset:0 0 auto;height:2px;
+  background:linear-gradient(90deg,transparent,var(--violet),transparent);opacity:.5}
+.readout[data-kind="ok"]{border-color:rgba(70,227,154,.4)}
+.readout[data-kind="ok"]::before{background:linear-gradient(90deg,transparent,var(--signal),transparent);opacity:.9}
+.readout[data-kind="unknown"]{border-color:rgba(240,180,41,.35)}
+.eyebrow{font-family:var(--mono);font-size:9.5px;letter-spacing:.18em;text-transform:uppercase;color:var(--ink-3)}
+.code{font-family:var(--mono);font-weight:700;font-size:clamp(22px,7.4vw,30px);letter-spacing:-.01em;
+  line-height:1.15;word-break:break-all}
+.code .pre{color:var(--ink-3)}
+.code .mid{color:var(--violet-lit)}
+.code .num{color:var(--ink)}
+.meaning{font-family:var(--disp);font-weight:700;font-size:16px;line-height:1.25}
+.sub{font-size:12.5px;color:var(--ink-2);line-height:1.55;word-break:break-word}
+.acts{display:flex;gap:8px;flex-wrap:wrap}
+.act{flex:1 1 120px;text-align:center;border-radius:12px;padding:12px;font-size:13px;font-weight:700;
+  cursor:pointer;border:1px solid var(--edge-hot);background:rgba(255,255,255,.05);color:var(--ink);
+  text-decoration:none;display:block}
+.act.primary{background:var(--signal);color:#062418;border-color:transparent}
+.act:focus-visible,.tool:focus-visible,button:focus-visible,input:focus-visible{outline:2px solid var(--violet-lit);outline-offset:2px}
+
+/* ---- ruční zadání ---- */
+.manual{display:flex;gap:8px}
+.manual input{flex:1;min-width:0;background:var(--panel);border:1px solid var(--edge);border-radius:12px;
+  padding:12px 14px;color:var(--ink);font-family:var(--mono);font-size:13px}
+.manual input::placeholder{color:var(--ink-3)}
+.manual button{border:1px solid var(--edge-hot);background:rgba(157,92,246,.16);color:var(--violet-lit);
+  border-radius:12px;padding:0 16px;font-family:var(--mono);font-size:11px;letter-spacing:.1em;
+  text-transform:uppercase;cursor:pointer}
+
+/* ---- protokol ---- */
+.log h2{font-family:var(--mono);font-size:9.5px;letter-spacing:.18em;text-transform:uppercase;
+  color:var(--ink-3);margin:0 0 10px;display:flex;justify-content:space-between;align-items:center}
+.log h2 button{background:none;border:0;color:var(--ink-3);font:inherit;letter-spacing:.1em;cursor:pointer;padding:0}
+.row{display:flex;align-items:center;gap:11px;padding:10px 0;border-bottom:1px solid var(--edge)}
+.row:last-child{border-bottom:0}
+.dot{width:7px;height:7px;border-radius:2px;flex:none;background:var(--violet)}
+.dot.ok{background:var(--signal)} .dot.unknown{background:var(--warn)}
+.row .c{flex:1;min-width:0}
+.row .c b{display:block;font-family:var(--mono);font-size:12.5px;font-weight:700;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.row .c span{font-size:11px;color:var(--ink-3)}
+.row time{font-family:var(--mono);font-size:10.5px;color:var(--ink-3);flex:none}
+.empty{font-size:12.5px;color:var(--ink-3);line-height:1.6;margin:0}
+.foot{font-size:10.5px;color:var(--ink-3);text-align:center;line-height:1.6;font-family:var(--mono);letter-spacing:.04em}
+</style>
+</head>
+<body>
+<div class="shell">
+
+  <div class="top">
+    <div class="brand">
+      <div class="mark">B</div>
+      <div>
+        <b>Čtečka</b>
+        <small>bakaláři.app</small>
+      </div>
+    </div>
+    <div class="state" id="state"><i></i><span id="stateText">Připraveno</span></div>
+  </div>
+
+  <div class="finder" id="finder">
+    <video id="video" playsinline muted></video>
+    <canvas id="canvas"></canvas>
+    <div class="reticle"><span></span><span></span><span></span><span></span></div>
+    <div class="sweep"></div>
+    <div class="veil" id="veil">
+      <p><strong>Kamera není spuštěná</strong>Zapněte ji a namiřte na QR kód. Kód se načte sám, nemusíte na nic klikat.</p>
+      <button class="tool" id="start">Spustit kameru</button>
+    </div>
+    <div class="tools" id="tools" hidden>
+      <button class="tool" id="torch" disabled>Svítilna</button>
+      <button class="tool" id="flip">Otočit</button>
+      <button class="tool" id="stop">Zastavit</button>
+    </div>
+  </div>
+
+  <div class="readout" id="readout" data-kind="idle">
+    <div class="eyebrow" id="roLabel">Odečet</div>
+    <div class="meaning" id="roMeaning">Zatím nic načteného</div>
+    <p class="sub" id="roSub">Namiřte kameru na QR kód voucheru nebo pozvánky. Kód můžete také napsat ručně.</p>
+  </div>
+
+  <div class="manual">
+    <input id="manualInput" placeholder="GB-AMB-0001 nebo odkaz" autocomplete="off" spellcheck="false">
+    <button id="manualBtn">Načíst</button>
+  </div>
+
+  <div class="log">
+    <h2>Protokol čtení <button id="clear" hidden>Vymazat</button></h2>
+    <div id="rows"><p class="empty">Načtené kódy se ukládají sem, dokud máte stránku otevřenou. Nikam se neodesílají.</p></div>
+  </div>
+
+  <p class="foot">Čte offline · nic neodesílá · <span id="engine">—</span></p>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jsQR/1.4.0/jsQR.min.js"></script>
+<script>
+const $ = id => document.getElementById(id);
+const video=$('video'), canvas=$('canvas'), ctx=canvas.getContext('2d',{willReadFrequently:true});
+const finder=$('finder'), veil=$('veil'), tools=$('tools');
+let stream=null, track=null, detector=null, raf=null, facing='environment';
+let last='', lastAt=0, history=[];
+
+/* ---------- rozpoznání obsahu ---------- */
+const ROLES={GIFT:'Dárkový voucher',AMB:'Ambassador',HLP:'Helper',HELPER:'Helper',GRD:'Guardian',GUARDIAN:'Guardian'};
+
+function parse(raw){
+  const text=(raw||'').trim();
+  if(!text) return null;
+
+  const code=text.match(/^([A-Z]{2,4})-([A-Z]{2,7})-(\d{3,8})$/i);
+  if(code){
+    const role=ROLES[code[2].toUpperCase()];
+    return {kind:'ok',label:'Kód voucheru',
+      meaning: role||'Voucher',
+      sub: role?'Členská karta klubu · úroveň '+role:'Neznámá úroveň — ověřte v administraci.',
+      code:text.toUpperCase(), segs:[code[1],code[2],code[3]]};
+  }
+
+  let url=null;
+  try{ url=new URL(text); }catch(e){}
+  if(url){
+    const p=url.pathname.replace(/\/+$/,'');
+    const join=p.match(/\/join\/([^\/]+)$/);
+    if(join) return {kind:'ok',label:'Pozvánka',meaning:'Pozvánkový odkaz',
+      sub:'Otevřením se nový člen připojí pod tímto kódem: '+decodeURIComponent(join[1]),
+      code:decodeURIComponent(join[1]).toUpperCase(),link:text};
+    const wal=p.match(/\/wallet\/([^\/]+)$/);
+    if(wal) return {kind:'ok',label:'Peněženka',meaning:'Odkaz na kartu',
+      sub:'Otevře peněženku držitele. Odkaz je osobní — nesdílejte ho.',
+      code:decodeURIComponent(wal[1]),link:text};
+    return {kind:'unknown',label:'Odkaz',meaning:url.hostname,
+      sub:'QR obsahuje webovou adresu, která nepatří do klubu.',code:text,link:text};
+  }
+
+  return {kind:'unknown',label:'Text',meaning:'Prostý text',
+    sub:'QR neobsahuje kód voucheru ani odkaz.',code:text};
+}
+
+/* ---------- zobrazení ---------- */
+function renderCode(r){
+  if(r.segs){
+    return '<span class="pre">'+r.segs[0]+'-</span><span class="mid">'+r.segs[1].toUpperCase()+'-</span><span class="num">'+r.segs[2]+'</span>';
+  }
+  return '<span class="num">'+r.code.replace(/[<>&]/g,c=>({'<':'&lt;','>':'&gt;','&':'&amp;'}[c]))+'</span>';
+}
+
+function show(r){
+  const ro=$('readout');
+  ro.dataset.kind=r.kind;
+  ro.innerHTML=
+    '<div class="eyebrow">'+r.label+'</div>'+
+    '<div class="code">'+renderCode(r)+'</div>'+
+    '<div class="meaning">'+r.meaning+'</div>'+
+    '<p class="sub">'+r.sub+'</p>'+
+    '<div class="acts">'+
+      (r.link?'<a class="act primary" href="'+r.link+'" target="_blank" rel="noopener">Otevřít odkaz</a>':'')+
+      '<button class="act" id="copy">Kopírovat</button>'+
+    '</div>';
+  const c=$('copy');
+  c.onclick=async()=>{
+    try{ await navigator.clipboard.writeText(r.link||r.code); c.textContent='Zkopírováno'; }
+    catch(e){ c.textContent='Nelze zkopírovat'; }
+    setTimeout(()=>c.textContent='Kopírovat',1600);
+  };
+}
+
+function logIt(r){
+  history.unshift({...r,at:new Date()});
+  if(history.length>40) history.pop();
+  const rows=$('rows');
+  rows.innerHTML=history.map(h=>
+    '<div class="row"><span class="dot '+h.kind+'"></span><div class="c"><b>'+
+    h.code.replace(/[<>&]/g,c=>({'<':'&lt;','>':'&gt;','&':'&amp;'}[c]))+
+    '</b><span>'+h.meaning+'</span></div><time>'+
+    h.at.toLocaleTimeString('cs-CZ',{hour:'2-digit',minute:'2-digit',second:'2-digit'})+'</time></div>').join('');
+  $('clear').hidden=false;
+}
+$('clear').onclick=()=>{history=[];$('rows').innerHTML='<p class="empty">Protokol je prázdný.</p>';$('clear').hidden=true;};
+
+/* ---------- zpětná vazba ---------- */
+let audio=null;
+function beep(ok){
+  try{
+    audio=audio||new (window.AudioContext||window.webkitAudioContext)();
+    const o=audio.createOscillator(), g=audio.createGain();
+    o.type='sine'; o.frequency.value=ok?880:340;
+    g.gain.setValueAtTime(.0001,audio.currentTime);
+    g.gain.exponentialRampToValueAtTime(.18,audio.currentTime+.01);
+    g.gain.exponentialRampToValueAtTime(.0001,audio.currentTime+.16);
+    o.connect(g).connect(audio.destination); o.start(); o.stop(audio.currentTime+.18);
+  }catch(e){}
+  if(navigator.vibrate) navigator.vibrate(ok?30:[20,40,20]);
+}
+
+function accept(text){
+  const now=Date.now();
+  if(text===last && now-lastAt<2500) return;
+  last=text; lastAt=now;
+  const r=parse(text);
+  if(!r) return;
+  finder.classList.add('lock');
+  setTimeout(()=>finder.classList.remove('lock'),650);
+  beep(r.kind==='ok');
+  show(r); logIt(r);
+}
+
+/* ---------- kamera ---------- */
+function setState(t,cls){ $('stateText').textContent=t; $('state').className='state'+(cls?' '+cls:''); }
+
+async function start(){
+  try{
+    setState('Spouštím…');
+    stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:facing,width:{ideal:1280},height:{ideal:1280}},audio:false});
+    video.srcObject=stream; await video.play();
+    track=stream.getVideoTracks()[0];
+    veil.style.display='none'; tools.hidden=false;
+    const caps=track.getCapabilities?track.getCapabilities():{};
+    $('torch').disabled=!caps.torch;
+    setState('Snímám','live');
+    loop();
+  }catch(e){
+    setState('Bez kamery','err');
+    veil.style.display='grid';
+    veil.innerHTML='<p><strong>Kameru nelze spustit</strong>Prohlížeč přístup nepovolil, nebo stránka neběží přes HTTPS. Kód zatím napište ručně níže.</p>';
+  }
+}
+function stop(){
+  if(raf) cancelAnimationFrame(raf);
+  if(stream) stream.getTracks().forEach(t=>t.stop());
+  stream=null;track=null;tools.hidden=true;
+  veil.style.display='grid';
+  veil.innerHTML='<p><strong>Kamera zastavena</strong>Snímání běží jen na vaše vyžádání.</p><button class="tool" id="start2">Spustit kameru</button>';
+  $('start2').onclick=start;
+  setState('Připraveno');
+}
+
+async function loop(){
+  if(!stream) return;
+  if(video.readyState===video.HAVE_ENOUGH_DATA){
+    if(detector){
+      try{ const c=await detector.detect(video); if(c.length) accept(c[0].rawValue); }catch(e){}
+    }else if(window.jsQR){
+      const w=video.videoWidth, h=video.videoHeight;
+      if(w&&h){
+        const s=Math.min(w,h), sx=(w-s)/2, sy=(h-s)/2, size=Math.min(s,640);
+        canvas.width=size; canvas.height=size;
+        ctx.drawImage(video,sx,sy,s,s,0,0,size,size);
+        const img=ctx.getImageData(0,0,size,size);
+        const r=jsQR(img.data,size,size,{inversionAttempts:'dontInvert'});
+        if(r&&r.data) accept(r.data);
+      }
+    }
+  }
+  raf=requestAnimationFrame(loop);
+}
+
+$('start').onclick=start;
+$('stop').onclick=stop;
+$('flip').onclick=async()=>{ facing = facing==='environment'?'user':'environment'; if(stream){ stream.getTracks().forEach(t=>t.stop()); stream=null; await start(); } };
+$('torch').onclick=async e=>{
+  if(!track) return;
+  const on=!e.target.classList.contains('on');
+  try{ await track.applyConstraints({advanced:[{torch:on}]}); e.target.classList.toggle('on',on); }catch(err){}
+};
+
+$('manualBtn').onclick=()=>{ const v=$('manualInput').value.trim(); if(!v) return; last=''; accept(v); $('manualInput').value=''; };
+$('manualInput').addEventListener('keydown',e=>{ if(e.key==='Enter') $('manualBtn').click(); });
+
+(async()=>{
+  if('BarcodeDetector' in window){
+    try{
+      const f=await BarcodeDetector.getSupportedFormats();
+      if(f.includes('qr_code')){ detector=new BarcodeDetector({formats:['qr_code']}); $('engine').textContent='nativní čtečka'; }
+    }catch(e){}
+  }
+  if(!detector) $('engine').textContent = window.jsQR?'záložní čtečka':'čtečka nedostupná';
+})();
+</script>
+</body>
+</html>
