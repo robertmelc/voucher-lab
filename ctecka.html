@@ -333,14 +333,17 @@ function stop(){
   setState('Připraveno');
 }
 
+let frames=0;
 async function loop(){
   if(!stream) return;
-  if(video.readyState===video.HAVE_ENOUGH_DATA){
+  frames++;
+  if(frames===60) setState('Hledám kód','live');
+  if(video.readyState>=2 && video.videoWidth){
     if(detector){
       try{ const c=await detector.detect(video); if(c.length) accept(c[0].rawValue); }catch(e){}
     }else if(window.jsQR){
       const w=video.videoWidth, h=video.videoHeight;
-      if(w&&h){
+      {
         const s=Math.min(w,h), sx=(w-s)/2, sy=(h-s)/2, size=Math.min(s,640);
         canvas.width=size; canvas.height=size;
         ctx.drawImage(video,sx,sy,s,s,0,0,size,size);

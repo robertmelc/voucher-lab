@@ -743,15 +743,23 @@ async function startCam(){
   }
 }
 function stopCam(){ if(raf)cancelAnimationFrame(raf); if(stream)stream.getTracks().forEach(t=>t.stop()); stream=null; }
+let frames=0, decodes=0;
 async function loop(){
   if(!stream) return;
   const v=$('video');
-  if(v.readyState===v.HAVE_ENOUGH_DATA){
+  frames++;
+  if(frames%20===0){
+    $('sheetHint').textContent = decodes
+      ? 'Snímám… hledám QR kód. Zkuste jiný odstup nebo víc světla.'
+      : 'Snímám, ale dekodér zatím nedostal obraz.';
+  }
+  if(v.readyState>=2 && v.videoWidth){
+    decodes++;
     let hit=null;
     if(detector){ try{ const c=await detector.detect(v); if(c.length) hit=c[0].rawValue; }catch(e){} }
     else if(window.jsQR){
       const w=v.videoWidth,h=v.videoHeight;
-      if(w&&h){ const s=Math.min(w,h),size=Math.min(s,600),cv=$('canvas'),cx=cv.getContext('2d',{willReadFrequently:true});
+      { const s=Math.min(w,h),size=Math.min(s,600),cv=$('canvas'),cx=cv.getContext('2d',{willReadFrequently:true});
         cv.width=size;cv.height=size;
         cx.drawImage(v,(w-s)/2,(h-s)/2,s,s,0,0,size,size);
         const d=cx.getImageData(0,0,size,size);
@@ -759,7 +767,7 @@ async function loop(){
         if(r&&r.data) hit=r.data;
       }
     }
-    if(hit){ submit(hit); return; }
+    if(hit){ frames=0; decodes=0; submit(hit); return; }
   }
   raf=requestAnimationFrame(loop);
 }
