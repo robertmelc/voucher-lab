@@ -478,9 +478,91 @@ function render(r){
 
 function capture(amt,r){
   if(r.v && !r.queued) r.v.balance-=amt;
+  const rest = r.v ? r.v.balance : null;
+  const rec = {code:r.code, amt, rest, auth:r.auth||'—', queued:!!r.queued,
+               issuer:r.v?r.v.issuer:'—', okruh:r.v?OKRUHY[r.v.okruh]:'—', at:new Date()};
   journal.unshift({id:seq++,code:r.code,amt,queued:!!r.queued,void:false,dir:'in',
-    at:new Date(),issuer:r.v?r.v.issuer:'—',auth:r.auth});
-  paintJournal(); clear();
+    at:rec.at,issuer:rec.issuer,auth:r.auth});
+  paintJournal();
+  amount=0; paintAmount();
+  renderReceipt(rec);
+}
+
+function renderReceipt(rec){
+  const rows=[['Kód voucheru',rec.code],['Vydavatel',rec.issuer],['Okruh',rec.okruh],
+    ['Čerpáno',fmt(rec.amt)+' Kč'],
+    ['Zbývá na voucheru',rec.rest===null?'ověří se po spojení':fmt(rec.rest)+' Kč'],
+    ['Autorizační kód',rec.auth],['Terminál',TERMINAL.tid+' / MID '+TERMINAL.mid],
+    ['Čas',rec.at.toLocaleString('cs-CZ')]];
+  $('result').innerHTML=
+    '<div class="slip" data-r="ok"><div class="head"><div class="glyph">✓</div>'+
+    '<div><b>Čerpání potvrzeno</b><span>doklad o čerpání</span></div></div><div class="body">'+
+    rows.map(([k,v])=>'<div class="kv"><span>'+k+'</span><b>'+v+'</b></div>').join('')+
+    '<p class="note">Doklad o čerpání není účtenka za zboží. Účtenku vydává provozovna ze své kasy — '+
+    'tento doklad se k ní přikládá jako potvrzení o způsobu úhrady.</p>'+
+    '<div style="margin-top:12px;display:grid;gap:8px">'+
+      '<button class="btn pri full" id="dlRec">Stáhnout doklad</button>'+
+      '<button class="btn full" id="prRec">Vytisknout</button>'+
+      '<button class="btn gho full" id="recDone">Hotovo</button>'+
+    '</div></div></div>';
+  $('dlRec').onclick=async()=>{ const u=await drawReceipt(rec);
+    const a=document.createElement('a'); a.href=u; a.download='doklad-'+rec.code+'.png'; a.click(); };
+  $('prRec').onclick=async()=>{ const u=await drawReceipt(rec);
+    const w=window.open('','_blank');
+    if(!w){ alert('Prohlížeč zablokoval nové okno. Použijte Stáhnout doklad.'); return; }
+    w.document.write('<style>@page{margin:10mm}body{margin:0;display:grid;place-items:center}'+
+      'img{max-width:80mm}</style><img src="'+u+'" onload="window.print()">'); w.document.close(); };
+  $('recDone').onclick=clear;
+}
+
+async function drawReceipt(rec){
+  try{ await document.fonts.ready; }catch(e){}
+  const W=760,H=1180;
+  const cv=document.createElement('canvas'); cv.width=W; cv.height=H;
+  const c=cv.getContext('2d');
+  const M='"JetBrains Mono",monospace', D='"Bricolage Grotesque",system-ui,sans-serif';
+  const sp=v=>{ try{ c.letterSpacing=v; }catch(e){} };
+  c.fillStyle='#ffffff'; c.fillRect(0,0,W,H);
+  const INK='#14121C', DIM='#6B6580';
+  let y=88;
+  c.textAlign='center';
+  c.fillStyle='#7C3AED'; c.font='700 20px '+M; sp('7px');
+  c.fillText('DOKLAD O ČERPÁNÍ VOUCHERU',W/2,y); sp('0px'); y+=54;
+  c.fillStyle=INK; c.font='800 40px '+D; c.fillText(TERMINAL.merchant,W/2,y); y+=34;
+  c.fillStyle=DIM; c.font='400 19px '+M;
+  c.fillText('MID '+TERMINAL.mid+' · TERMINÁL '+TERMINAL.tid,W/2,y); y+=44;
+
+  const dash=(yy)=>{ c.strokeStyle='#D9D5E2'; c.lineWidth=2; c.setLineDash([7,8]);
+    c.beginPath(); c.moveTo(64,yy); c.lineTo(W-64,yy); c.stroke(); c.setLineDash([]); };
+  dash(y); y+=52;
+
+  c.textAlign='center'; c.fillStyle=DIM; c.font='400 19px '+M; sp('5px');
+  c.fillText('ČERPÁNO',W/2,y); sp('0px'); y+=64;
+  c.fillStyle=INK; c.font='800 78px '+D; c.fillText(fmt(rec.amt)+' Kč',W/2,y); y+=54;
+  c.fillStyle='#0F7A4E'; c.font='700 26px '+M;
+  c.fillText(rec.rest===null?'zůstatek ověří se po spojení':'zbývá '+fmt(rec.rest)+' Kč',W/2,y);
+  y+=44; dash(y); y+=48;
+
+  const line=(k,v)=>{ c.textAlign='left'; c.fillStyle=DIM; c.font='400 21px '+M;
+    c.fillText(k,72,y); c.textAlign='right'; c.fillStyle=INK; c.font='700 21px '+M;
+    c.fillText(v,W-72,y); y+=40; };
+  line('Voucher',rec.code);
+  line('Vydavatel',rec.issuer);
+  line('Okruh',rec.okruh);
+  line('Autorizace',rec.auth);
+  line('Datum',rec.at.toLocaleDateString('cs-CZ'));
+  line('Čas',rec.at.toLocaleTimeString('cs-CZ'));
+  if(rec.queued) line('Režim','offline — ve frontě');
+  y+=8; dash(y); y+=46;
+
+  c.textAlign='center'; c.fillStyle=DIM; c.font='400 18px '+D;
+  ['Toto není daňový doklad ani účtenka za zboží.',
+   'Účtenku vydává provozovna ze své kasy; tento',
+   'doklad potvrzuje pouze způsob úhrady.'].forEach(t=>{ c.fillText(t,W/2,y); y+=28; });
+  y+=18;
+  c.fillStyle='#A29CB5'; c.font='400 17px '+M; sp('3px');
+  c.fillText('DĚKUJEME ZA NÁVŠTĚVU',W/2,y); sp('0px');
+  return cv.toDataURL('image/png');
 }
 function clear(){ $('result').innerHTML=''; amount=0; paintAmount(); }
 
