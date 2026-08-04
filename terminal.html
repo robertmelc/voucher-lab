@@ -388,9 +388,26 @@ function renderIssued(code,amt,exp){
     rows.map(([k,v])=>'<div class="kv"><span>'+k+'</span><b>'+v+'</b></div>').join('')+
     '<p class="note">Voucher je od této chvíle platný a lze ho hned uplatnit — zkuste přepnout na Přijmout voucher a naskenovat tenhle QR kód. '+
     'Vydáním vznikl provozovně závazek, ne tržba; tržba nastane až uplatněním.</p>'+
-    '<div style="margin-top:12px"><button class="btn pri full" id="issueDone">Hotovo</button></div></div></div>';
+    '<div style="margin-top:12px;display:grid;gap:8px">'+
+      '<button class="btn pri full" id="dlVoucher">Stáhnout poukaz</button>'+
+      '<button class="btn full" id="prVoucher">Vytisknout</button>'+
+      '<button class="btn gho full" id="issueDone">Hotovo</button>'+
+    '</div></div></div>';
   try{ new QRCode($('qrbox'),{text:code,width:150,height:150,colorDark:'#111111',colorLight:'#ffffff'}); }
   catch(e){ $('qrbox').innerHTML='<div style="font-family:var(--mono);color:#111;font-size:13px">'+code+'</div>'; }
+  $('dlVoucher').onclick=async()=>{
+    const url=await drawVoucher(code,amt,exp);
+    const a=document.createElement('a');
+    a.href=url; a.download='poukaz-'+code+'.png'; a.click();
+  };
+  $('prVoucher').onclick=async()=>{
+    const url=await drawVoucher(code,amt,exp);
+    const w=window.open('','_blank');
+    if(!w){ alert('Prohlížeč zablokoval nové okno. Použijte Stáhnout poukaz.'); return; }
+    w.document.write('<style>@page{margin:12mm}body{margin:0;display:grid;place-items:center}'+
+      'img{max-width:100%;max-height:100vh}</style><img src="'+url+'" onload="window.print()">');
+    w.document.close();
+  };
   $('issueDone').onclick=()=>{
     journal.unshift({id:seq++,code,amt,queued:false,void:false,dir:'out',
       at:new Date(),issuer:'Hotel Royal',auth:null});
@@ -513,6 +530,113 @@ $('helpTable').innerHTML=
     (new Date(v.expires)<new Date()?' · propadlý':'')+'</td></tr>').join('')
   +'<tr><td>&nbsp;</td><td>&nbsp;</td></tr>'
   +Object.entries(REASONS).map(([k,v])=>'<tr><td>'+k+'</td><td>'+v+'</td></tr>').join('');
+
+/* ================= POUKAZ KE STAŽENÍ ================= */
+function qrCanvas(text,size){
+  return new Promise(res=>{
+    const box=document.createElement('div');
+    box.style.cssText='position:fixed;left:-9999px;top:0';
+    document.body.appendChild(box);
+    try{ new QRCode(box,{text,width:size,height:size,colorDark:'#0A0912',colorLight:'#ffffff',
+      correctLevel:QRCode.CorrectLevel.M}); }catch(e){}
+    setTimeout(()=>{
+      const c=box.querySelector('canvas');
+      if(c){ res(c); }
+      else { const im=box.querySelector('img');
+        if(im){ const cv=document.createElement('canvas'); cv.width=cv.height=size;
+          cv.getContext('2d').drawImage(im,0,0,size,size); res(cv); } else res(null); }
+      setTimeout(()=>box.remove(),50);
+    },140);
+  });
+}
+
+async function drawVoucher(code,amt,exp){
+  try{ await document.fonts.ready; }catch(e){}
+  const W=1080,H=1620;
+  const cv=document.createElement('canvas'); cv.width=W; cv.height=H;
+  const c=cv.getContext('2d');
+  const DISP='"Bricolage Grotesque",system-ui,sans-serif';
+  const MONO='"JetBrains Mono",monospace';
+  const BODY='"DM Sans",system-ui,sans-serif';
+  const sp=v=>{ try{ c.letterSpacing=v; }catch(e){} };
+  const mid=t=>{ c.textAlign='center'; c.fillText(t,W/2,0); };
+
+  // pozadí
+  const g=c.createLinearGradient(0,0,0,H);
+  g.addColorStop(0,'#221A3E'); g.addColorStop(.55,'#16132A'); g.addColorStop(1,'#0A0912');
+  c.fillStyle=g; c.fillRect(0,0,W,H);
+  const rg=c.createRadialGradient(W*.5,-H*.05,0,W*.5,-H*.05,W*.95);
+  rg.addColorStop(0,'rgba(157,92,246,.35)'); rg.addColorStop(1,'rgba(157,92,246,0)');
+  c.fillStyle=rg; c.fillRect(0,0,W,H*.6);
+
+  // rámeček
+  c.strokeStyle='rgba(255,255,255,.13)'; c.lineWidth=2;
+  c.beginPath(); c.roundRect(44,44,W-88,H-88,34); c.stroke();
+
+  c.textAlign='center';
+
+  // hlavička
+  c.fillStyle='#C084FC'; c.font='600 26px '+MONO; sp('9px');
+  c.fillText('DÁRKOVÝ POUKAZ',W/2,168); sp('0px');
+
+  c.fillStyle='#F2EEFA'; c.font='800 66px '+DISP;
+  c.fillText('Hotel Royal',W/2,258);
+
+  c.fillStyle='#9A8CBB'; c.font='400 27px '+BODY;
+  c.fillText('Lázně a wellness',W/2,306);
+
+  // dělicí linka s perforací
+  c.strokeStyle='rgba(255,255,255,.14)'; c.lineWidth=2;
+  c.setLineDash([9,11]); c.beginPath(); c.moveTo(140,364); c.lineTo(W-140,364); c.stroke();
+  c.setLineDash([]);
+  c.fillStyle='#0A0912';
+  c.beginPath(); c.arc(44,364,30,0,7); c.fill();
+  c.beginPath(); c.arc(W-44,364,30,0,7); c.fill();
+  c.strokeStyle='rgba(255,255,255,.13)';
+  c.beginPath(); c.arc(44,364,30,0,7); c.stroke();
+  c.beginPath(); c.arc(W-44,364,30,0,7); c.stroke();
+
+  // hodnota
+  c.fillStyle='#5F5382'; c.font='400 24px '+MONO; sp('7px');
+  c.fillText('HODNOTA',W/2,442); sp('0px');
+  c.fillStyle='#46E39A'; c.font='800 128px '+DISP;
+  c.fillText(fmt(amt)+' Kč',W/2,566);
+
+  // QR dlaždice
+  const q=await qrCanvas(code,460);
+  const tile=520, tx=(W-tile)/2, ty=650;
+  c.fillStyle='#ffffff';
+  c.beginPath(); c.roundRect(tx,ty,tile,tile,28); c.fill();
+  if(q) c.drawImage(q,tx+30,ty+30,tile-60,tile-60);
+
+  // kód
+  c.fillStyle='#F2EEFA'; c.font='700 44px '+MONO; sp('3px');
+  c.fillText(code,W/2,ty+tile+82); sp('0px');
+  c.fillStyle='#5F5382'; c.font='400 23px '+BODY;
+  c.fillText('Kód pro obsluhu, pokud QR nelze načíst',W/2,ty+tile+124);
+
+  // údaje
+  const rowY=ty+tile+206;
+  const put=(x,lab,val)=>{
+    c.fillStyle='#5F5382'; c.font='400 21px '+MONO; sp('5px');
+    c.fillText(lab,x,rowY); sp('0px');
+    c.fillStyle='#F2EEFA'; c.font='700 34px '+BODY;
+    c.fillText(val,x,rowY+50);
+  };
+  put(W*.30,'PLATNOST DO',exp.toLocaleDateString('cs-CZ'));
+  put(W*.70,'UPLATNÍTE V','Lázně a wellness');
+
+  // patička
+  c.fillStyle='#9A8CBB'; c.font='400 23px '+BODY;
+  const lines=['Poukaz uplatníte u provozoven zapojených v tomto okruhu.',
+               'Hodnotu lze čerpat postupně, zbytek zůstává na poukazu.'];
+  lines.forEach((t,i)=>c.fillText(t,W/2,H-206+i*36));
+  c.fillStyle='#5F5382'; c.font='400 20px '+MONO; sp('4px');
+  c.fillText('VYDÁNO '+new Date().toLocaleDateString('cs-CZ')+' · TERMINÁL '+TERMINAL.tid+' · MID '+TERMINAL.mid,W/2,H-108);
+  sp('0px');
+
+  return cv.toDataURL('image/png');
+}
 
 /* ================= KAMERA ================= */
 let stream=null,detector=null,raf=null;
