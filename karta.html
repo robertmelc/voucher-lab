@@ -42,6 +42,11 @@ body{background:radial-gradient(125% 55% at 50% -8%,rgba(157,92,246,.22),transpa
 
 .by{margin-top:12px;font-size:11.5px;color:var(--ink3);font-family:var(--mono);letter-spacing:.04em}
 .by b{color:var(--violet-lit);font-weight:700}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.why{display:grid;gap:7px;margin:-4px 0 14px}
+.why button{text-align:left;border:1px solid var(--edge);background:rgba(255,255,255,.04);color:var(--ink);
+  border-radius:12px;padding:12px 14px;font-size:13.5px;cursor:pointer;font-family:var(--body)}
+.why button.on{border-color:var(--violet);background:rgba(157,92,246,.14);color:var(--ink)}
 .gdpr{font-size:11px;color:var(--ink3);line-height:1.55;margin:-6px 0 14px}
 .phoneline{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-top:11px;
   padding-top:10px;border-top:1px dashed rgba(255,255,255,.12);font-family:var(--mono);font-size:11px;color:var(--ink3)}
@@ -132,6 +137,22 @@ dialog::backdrop{background:rgba(5,4,10,.92)}
     </div>
     <button class="btn pri" id="rejSave">Uložit a získat los</button>
     <button class="btn" id="rejClose" style="margin-top:8px">Zpět</button>
+  </div>
+</div>
+
+<div class="sheet" id="noSheet">
+  <div class="pane">
+    <h3>Zatím ne — a to je taky odpověď</h3>
+    <p class="s">Řekněte nám proč. Los dostanete stejně jako za ano — víc nám pomůže vědět, kde to nefunguje, než slyšet ano od každého.</p>
+    <label>Hlavní důvod</label>
+    <div class="why" id="whyList"></div>
+    <div id="noPhoneWrap">
+      <label>Telefon — kam vám dáme vědět o výhře</label>
+      <input id="noPhone" type="tel" inputmode="tel" placeholder="+420 777 123 456" autocomplete="tel">
+      <p class="gdpr">Bez čísla vám výhru nemáme jak oznámit. Použijeme ho jen na losování.</p>
+    </div>
+    <button class="btn pri" id="noSave">Odeslat a získat los</button>
+    <button class="btn" id="noClose" style="margin-top:8px">Zpět</button>
   </div>
 </div>
 
@@ -257,7 +278,8 @@ async function render(){
     '<div class="tickets" id="tix"></div>'+
     '<button class="btn pri" id="zoomBtn">Zvětšit kód</button>'+
     '<button class="btn" id="rejBtn">Tady to nevzali — získat los</button>'+
-    '<button class="btn" id="wantBtn">Chci to pro svůj podnik</button>'+
+    '<div class="two"><button class="btn" id="wantBtn">Chci to pro svůj podnik</button>'+
+    '<button class="btn" id="noBtn">Zatím ne</button></div>'+
     '<p class="foot">Ukázková karta · bez serveru · hodnota je v odkazu</p>';
 
   new QRCode(document.getElementById('qr'),{text:url,width:210,height:210,
@@ -294,6 +316,39 @@ async function render(){
     document.getElementById('bizPhone').value=phone||'';
     document.getElementById('bizSheet').classList.add('on');
     setTimeout(()=>document.getElementById('bizName').focus(),150);
+  };
+  const WHY=['O tomhle nerozhoduju já','Nemám na to zákazníky','Máme vlastní poukazy',
+             'Nechci další systém u pokladny','Jiný důvod'];
+  let why='';
+  document.getElementById('whyList').innerHTML=WHY.map((w,i)=>'<button data-w="'+i+'">'+w+'</button>').join('');
+  document.getElementById('whyList').onclick=e=>{
+    const b=e.target.closest('button[data-w]'); if(!b) return;
+    why=WHY[Number(b.dataset.w)];
+    document.getElementById('whyList').querySelectorAll('button')
+      .forEach(x=>x.classList.toggle('on',x===b));
+  };
+  document.getElementById('noBtn').onclick=()=>{
+    document.getElementById('noPhoneWrap').style.display = phone ? 'none' : '';
+    document.getElementById('noPhone').value=phone||'';
+    document.getElementById('noSheet').classList.add('on');
+  };
+  document.getElementById('noClose').onclick=()=>document.getElementById('noSheet').classList.remove('on');
+  document.getElementById('noSave').onclick=()=>{
+    const b=document.getElementById('noSave');
+    if(!why){ b.textContent='Vyberte prosím důvod'; setTimeout(()=>b.textContent='Odeslat a získat los',1800); return; }
+    if(!phone){
+      const t=document.getElementById('noPhone').value.trim();
+      if(!okPhone(t)){ document.getElementById('noPhone').focus();
+        b.textContent='Bez čísla vám výhru nedoručíme';
+        setTimeout(()=>b.textContent='Odeslat a získat los',2000); return; }
+      setPhone(t);
+    }
+    document.getElementById('noSheet').classList.remove('on');
+    const nb=document.getElementById('noBtn');
+    nb.textContent='Díky za odpověď'; nb.disabled=true;
+    document.getElementById('wantBtn').disabled=true;
+    paintTix();
+    actionCode(v.code,'no').then(c=>showConf(c,'Za odpověď „zatím ne“ — '+why+'.'));
   };
   document.getElementById('bizClose').onclick=()=>document.getElementById('bizSheet').classList.remove('on');
   document.getElementById('bizSave').onclick=()=>{
