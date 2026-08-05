@@ -1,0 +1,360 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#08120F">
+<meta name="robots" content="noindex, nofollow">
+<title>Mooncher — kompletní manuál</title>
+<link rel="apple-touch-icon" href="icon-180.png">
+<link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600..800&family=DM+Sans:wght@400;500;700&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --void:#08120F;--panel:#0F211C;--panel2:#163029;--key:#1B3A32;
+  --edge:rgba(255,255,255,.09);--edge-hot:rgba(255,255,255,.18);
+  --teal:#22C7B0;--teal-lit:#6FE9DA;--ok:#46E39A;--warn:#F0B429;--bad:#E5786B;
+  --ink:#EAF6F2;--ink2:#8FA9A4;--ink3:#5B7671;
+  --mono:'JetBrains Mono',ui-monospace,monospace;--disp:'Bricolage Grotesque',system-ui,sans-serif;--body:'DM Sans',system-ui,sans-serif;
+}
+*{box-sizing:border-box}
+body{margin:0;background:radial-gradient(100% 40% at 50% -4%,rgba(34,199,176,.14),transparent 55%),var(--void);
+  color:var(--ink);font-family:var(--body);line-height:1.65}
+.shell{max-width:1140px;margin:0 auto;padding:30px 20px 80px;display:grid;grid-template-columns:230px 1fr;gap:40px}
+@media (max-width:900px){.shell{grid-template-columns:1fr;gap:24px}nav{position:static!important;max-height:none!important}}
+
+/* ---- obsah ---- */
+nav{position:sticky;top:24px;align-self:start;max-height:calc(100vh - 48px);overflow:auto}
+nav .brand{display:flex;align-items:center;gap:10px;margin-bottom:18px}
+nav .brand img{width:34px;height:34px;border-radius:11px;display:block}
+nav .brand b{font-family:var(--disp);font-weight:800;font-size:16px;letter-spacing:-.02em;display:block;line-height:1}
+nav .brand span{font-family:var(--mono);font-size:8.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--ink3);display:block;margin-top:4px}
+nav a{display:block;padding:7px 10px;border-radius:9px;color:var(--ink2);text-decoration:none;font-size:13px;
+  border-left:2px solid transparent}
+nav a:hover{color:var(--ink);background:rgba(255,255,255,.04)}
+nav a.h{font-family:var(--mono);font-size:9px;letter-spacing:.16em;text-transform:uppercase;color:var(--ink3);
+  margin-top:14px;pointer-events:none;padding-left:10px}
+
+/* ---- text ---- */
+h1{font-family:var(--disp);font-size:clamp(28px,5vw,40px);font-weight:800;letter-spacing:-.03em;margin:0;line-height:1.05}
+.lede{font-size:16px;color:var(--ink2);margin:14px 0 0;max-width:62ch}
+h2{font-family:var(--disp);font-size:clamp(20px,3.2vw,26px);font-weight:800;letter-spacing:-.02em;
+  margin:54px 0 4px;padding-top:20px;border-top:1px solid var(--edge);scroll-margin-top:20px}
+h2 .n{font-family:var(--mono);font-size:11px;color:var(--teal-lit);letter-spacing:.18em;display:block;margin-bottom:8px;font-weight:400}
+h3{font-family:var(--disp);font-size:17px;font-weight:800;margin:28px 0 6px}
+p{margin:10px 0;max-width:70ch}
+ul,ol{margin:10px 0;padding-left:22px;max-width:70ch}
+li{margin:6px 0;color:var(--ink2)}
+li b,p b{color:var(--ink)}
+code{font-family:var(--mono);font-size:.88em;background:rgba(255,255,255,.07);border:1px solid var(--edge);
+  border-radius:6px;padding:2px 6px;color:var(--teal-lit)}
+
+table{width:100%;border-collapse:collapse;margin:16px 0;font-size:13.5px;background:var(--panel);
+  border:1px solid var(--edge);border-radius:14px;overflow:hidden}
+th,td{padding:10px 12px;text-align:left;border-bottom:1px solid var(--edge);vertical-align:top}
+thead th{background:var(--panel2);font-family:var(--mono);font-size:9.5px;letter-spacing:.12em;
+  text-transform:uppercase;color:var(--ink3);font-weight:400}
+tbody tr:last-child td{border-bottom:0}
+td:first-child{color:var(--ink)}
+td code{white-space:nowrap}
+
+.steps{counter-reset:s;list-style:none;padding:0;max-width:70ch}
+.steps li{counter-increment:s;position:relative;padding:13px 15px 13px 52px;background:linear-gradient(180deg,var(--panel2),var(--panel));
+  border:1px solid var(--edge);border-radius:14px;margin-bottom:8px;font-size:14px}
+.steps li::before{content:counter(s);position:absolute;left:14px;top:12px;width:26px;height:26px;border-radius:9px;
+  background:var(--teal);color:#04231E;font-family:var(--mono);font-size:12.5px;font-weight:700;display:grid;place-items:center}
+.steps li b{display:block;font-family:var(--disp);font-size:15px;margin-bottom:2px;color:var(--ink)}
+
+.note{border-left:3px solid var(--teal);background:rgba(34,199,176,.08);border-radius:0 12px 12px 0;
+  padding:13px 16px;margin:18px 0;max-width:70ch}
+.note.w{border-left-color:var(--warn);background:rgba(240,180,41,.08)}
+.note.b{border-left-color:var(--bad);background:rgba(229,120,107,.08)}
+.note b{display:block;font-family:var(--disp);font-size:14.5px;margin-bottom:3px;color:var(--ink)}
+.note p{margin:0;font-size:13.5px;color:var(--ink2)}
+
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:11px;margin:16px 0}
+.tile{background:linear-gradient(180deg,var(--panel2),var(--panel));border:1px solid var(--edge);
+  border-radius:15px;padding:15px}
+.tile b{font-family:var(--disp);font-size:15px;display:block;margin-bottom:4px}
+.tile span{font-size:12.5px;color:var(--ink2);line-height:1.55;display:block}
+.tile code{display:inline-block;margin-top:8px;font-size:11px}
+
+.foot{margin-top:60px;padding-top:20px;border-top:1px solid var(--edge);
+  font-family:var(--mono);font-size:10.5px;color:var(--ink3);line-height:1.9}
+@media print{body{background:#fff;color:#000}nav{display:none}.shell{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="shell">
+
+<nav>
+  <div class="brand"><img src="icon-192.png" alt=""><div><b>mooncher</b><span>manuál</span></div></div>
+  <a class="h">Základ</a>
+  <a href="#o">Co to je</a>
+  <a href="#casti">Části systému</a>
+  <a href="#start">Rychlý start</a>
+  <a class="h">Pro testery</a>
+  <a href="#priprava">Příprava</a>
+  <a href="#ukazka">Ukázka krok za krokem</a>
+  <a href="#kody">Potvrzovací kódy</a>
+  <a class="h">Aplikace</a>
+  <a href="#terminal">Terminál</a>
+  <a href="#karta">Karta</a>
+  <a href="#konzole">Konzole sítě</a>
+  <a href="#ctecka">Čtečka</a>
+  <a class="h">Vyhodnocení</a>
+  <a href="#dashboard">Dashboard</a>
+  <a href="#slosovani">Slosování</a>
+  <a class="h">Ostatní</a>
+  <a href="#reference">Referenční tabulky</a>
+  <a href="#technicke">Technické poznámky</a>
+  <a href="#limity">Co zatím nefunguje</a>
+  <a href="#potize">Když něco nejde</a>
+</nav>
+
+<main>
+  <h1>Kompletní manuál</h1>
+  <p class="lede">Popis celého prototypu Mooncher — co která část dělá, jak se používá při testování v terénu a jak se výsledky vyhodnocují. Verze k srpnu 2026.</p>
+
+<!-- ============ ZÁKLAD ============ -->
+<h2 id="o"><span class="n">01</span>Co to je</h2>
+<p>Dnes je každý dárkový poukaz uzavřený ostrov. Hotel ho vydá, hotel ho přijme, a když ho host nevyčerpá, zůstane v rozvaze závazek. Slevové portály na tom vydělávají tím, že prodají nabídku a vezmou si provizi z prodeje — čím míň hostů dorazí, tím lépe pro ně.</p>
+<p>Mooncher staví opak: <b>sdílenou akceptační vrstvu.</b> Voucher vydaný jedním členem sítě lze uplatnit i u jiného. Peníze přitom celou dobu leží na účtu vydavatele. Platíme se z uplatnění, ne z prodeje — takže máme stejný zájem jako hotel i jako host, aby ten poukaz někdo skutečně vyčerpal.</p>
+<div class="note">
+  <b>Co testujeme</b>
+  <p>Ne technologii — ta funguje. Testujeme jedinou otázku: je pro provozovnu cizí host s cizím poukazem tržba navíc, nebo konkurenční hrozba? Na téhle odpovědi stojí všechno ostatní.</p>
+</div>
+
+<h2 id="casti"><span class="n">02</span>Části systému</h2>
+<div class="grid">
+  <div class="tile"><b>Terminál</b><span>Pult, který voucher vydá i přijme. Tohle používá tester.</span><code>terminal.html</code></div>
+  <div class="tile"><b>Karta</b><span>To, co uvidí druhá strana po naskenování QR. Nic se neinstaluje.</span><code>karta.html</code></div>
+  <div class="tile"><b>Konzole sítě</b><span>Pravidla schématu — okruhy, kdo co přijímá, sledování stropů.</span><code>konzole.html</code></div>
+  <div class="tile"><b>Čtečka</b><span>Jen přečte QR a řekne, co v něm je. Předchůdce terminálu.</span><code>ctecka.html</code></div>
+  <div class="tile"><b>Pro testery</b><span>Stránka s návodem, kterou dostanou testeři odkazem.</span><code>testeri.html</code></div>
+  <div class="tile"><b>Vizitka</b><span>Digitální vizitka ve tvaru voucheru, s QR do ukázky.</span><code>vizitka.html</code></div>
+  <div class="tile"><b>Dashboard</b><span>Vyhodnocení a slosování. Není na webu, běží lokálně.</span><code>dashboard.html</code></div>
+</div>
+<p>Vše kromě dashboardu běží na <code>demo.mooncher.com</code>. Rozcestník je na kořenové adrese.</p>
+
+<h2 id="start"><span class="n">03</span>Rychlý start</h2>
+<ol class="steps">
+  <li><b>Otevřít terminál v telefonu</b>demo.mooncher.com/terminal.html</li>
+  <li><b>Přidat na plochu</b>Menu prohlížeče → Přidat na domovskou obrazovku. Otevře se pak bez adresního řádku, jako aplikace.</li>
+  <li><b>Nastavit svou značku</b>Klepnout na řádek TESTER v horní liště, napsat iniciály a telefon.</li>
+  <li><b>Záložka Ukázka</b>Otevře se rovnou QR kód. Od téhle chvíle jde jen o to někomu ho ukázat.</li>
+</ol>
+
+<!-- ============ PRO TESTERY ============ -->
+<h2 id="priprava"><span class="n">04</span>Příprava testera</h2>
+<p>Nastavuje se jednou a uloží se do telefonu.</p>
+<table>
+  <thead><tr><th>Co</th><th>Kde</th><th>Proč</th></tr></thead>
+  <tbody>
+    <tr><td><b>Značka</b></td><td>Horní lišta → klepnout na TESTER, nebo pole v záložce Ukázka</td><td>Objeví se v číslech karet (<code>DEMO-RM-901</code>) i na kartě jako „Kartu vám předal RM“. Podle toho poznáme, čí ukázka to byla.</td></tr>
+    <tr><td><b>Telefon</b></td><td>Pod polem se značkou</td><td>Za každou ukázku máte i vy los. Bez čísla vám výhru nemáme jak oznámit.</td></tr>
+    <tr><td><b>Komu ukazuji</b></td><td>Nad tlačítkem Nová ukázková karta</td><td>Nepovinné, ale bez toho se v přehledu objeví jen číslo karty a nebude komu poslat výhru na druhé straně.</td></tr>
+  </tbody>
+</table>
+
+<h2 id="ukazka"><span class="n">05</span>Ukázka krok za krokem</h2>
+<p>Celé to má trvat do dvou minut. Rozhoduje první moment — ať druhý člověk co nejdřív drží něco vlastního.</p>
+<ol class="steps">
+  <li><b>Podržte displej</b>Záložka Ukázka se otevře rovnou na QR kódu. Nic nemačkejte.</li>
+  <li><b>Ať to naskenuje fotoaparátem</b>Nic si neinstaluje. Na jeho telefonu naskočí karta s hodnotou 500 Kč. Tohle jsou ty tři vteřiny, ve kterých se rozhoduje.</li>
+  <li><b>Přepněte na Přijmout voucher</b>Zadejte 100 a načtěte QR z jeho displeje.</li>
+  <li><b>Potvrďte čerpání</b>Uvidí, že mu zbylo 400 — a hlavně že zbytek zůstal jemu.</li>
+  <li><b>Zeptejte se</b>„Kdyby tohle mohli lidi uplatnit u vás, chtěl byste to?“ Na jeho kartě jsou dvě tlačítka: <b>Chci to pro svůj podnik</b> a <b>Zatím ne</b>.</li>
+  <li><b>Vezměte si kód</b>Po odpovědi se mu ukáže čtyřznakový kód. Nadiktuje vám ho.</li>
+  <li><b>Zadejte kód u sebe</b>Ukázka → pole <b>Kód od něj</b> → Uplatnit. Připíše se vám los.</li>
+</ol>
+<div class="note w">
+  <b>Ne není špatná odpověď</b>
+  <p>Los dostane obojí strana i za „zatím ne“ — a pro nás je odmítnutí s uvedeným důvodem cennější než zdvořilé ano. Tester nemá nic prodávat, jen ukázat a poslechnout si reakci.</p>
+</div>
+
+<h2 id="kody"><span class="n">06</span>Potvrzovací kódy</h2>
+<p>Kód spojuje to, co udělala druhá strana, s tím, komu se má připsat los. Bez něj se k testerovi nic nedostane, protože telefony spolu nekomunikují.</p>
+<ul>
+  <li>Kód se počítá z čísla karty, takže ho terminál ověří i bez internetu</li>
+  <li>Každá akce dá jiný kód — <b>v testovacím režimu neomezeně</b>, v ostrém provozu nejvýš tři na kartu</li>
+  <li>Stejný kód nejde uplatnit dvakrát</li>
+  <li>Kód projde jen v tom terminálu, který kartu vydal</li>
+</ul>
+<p>Když tester zadá kód s odpovědí „zatím ne“, terminál se ho rovnou zeptá na důvod. Tahle informace je z celého testu nejcennější — proto se sbírá u testera, ne na kartě.</p>
+
+<!-- ============ APLIKACE ============ -->
+<h2 id="terminal"><span class="n">07</span>Terminál</h2>
+<p>Tři záložky: <b>Přijmout voucher</b>, <b>Vydat voucher</b>, <b>Ukázka</b>.</p>
+
+<h3>Přijmout voucher</h3>
+<p>Nejdřív částka, pak voucher — obráceně to nejde, protože bez částky není co autorizovat. Autorizace a potvrzení jsou dva kroky: schválení jen rezervuje, teprve <b>Potvrdit čerpání</b> odečte. Do té chvíle jde zrušit.</p>
+<ul>
+  <li><b>Částečné čerpání</b> — když je částka vyšší než zůstatek, nabídne se vyčerpat, co na kartě je</li>
+  <li><b>Storno</b> — u každého řádku v deníku, zůstatek se vrátí</li>
+  <li><b>Doklad o čerpání</b> — po potvrzení jde stáhnout i vytisknout na 80mm pásku</li>
+</ul>
+<div class="note">
+  <b>Doklad není účtenka</b>
+  <p>Účtenku za zboží vydává provozovna ze své kasy. Doklad z terminálu jen potvrzuje způsob úhrady a zbývající zůstatek. Je to na něm výslovně napsané.</p>
+</div>
+
+<h3>Vydat voucher</h3>
+<p>Hodnota, okruh, platnost, způsob předání — a vznikne kód s QR. Voucher je od té chvíle platný a jde hned uplatnit.</p>
+<p>Souhrn dole neukazuje obrat, ale <b>Vydáno / Uplatněno / Saldo</b>. Vydání totiž není tržba, ale závazek; tržba nastane až uplatněním. Saldo je číslo, které dnes hoteliér nikde nevidí.</p>
+
+<h3>Offline režim</h3>
+<p>Přepíná se tlačítkem vpravo nahoře. Do <b>500 Kč</b> terminál rozhodne sám a transakci zařadí do fronty; nad limit vrátí kód 91 a odmítne. Je to kompromis mezi rizikem a použitelností, který se v ostrém provozu nastavuje per provozovna.</p>
+
+<h3>Deník a uzávěrka</h3>
+<p>Deník drží všechny transakce, uzávěrka je sečte a rozepíše na vydané, uplatněné, saldo, offline frontu a storna.</p>
+
+<h2 id="karta"><span class="n">08</span>Karta</h2>
+<p>To, co uvidí druhá strana. Otevře se naskenováním QR běžným fotoaparátem, bez instalace a bez registrace — <b>hodnota je v odkazu</b>.</p>
+<table>
+  <thead><tr><th>Prvek</th><th>K čemu je</th></tr></thead>
+  <tbody>
+    <tr><td><b>Zůstatek</b></td><td>Velké číslo nahoře. Po každém čerpání se karta přepíše novým QR z terminálu.</td></tr>
+    <tr><td><b>Kartu vám předal</b></td><td>Značka testera — evidence řetězu i sociální důkaz.</td></tr>
+    <tr><td><b>Zvětšit kód</b></td><td>QR přes celou obrazovku, ať se dobře skenuje z displeje.</td></tr>
+    <tr><td><b>Tady to nevzali</b></td><td>Zapíše místo, kde kartu odmítli, a dá za to los. Jedno místo jednou, tři za měsíc.</td></tr>
+    <tr><td><b>Chci to pro svůj podnik</b></td><td>Název podniku a telefon. Obchodní kontakt plus los.</td></tr>
+    <tr><td><b>Zatím ne</b></td><td>Pět důvodů k výběru. Los stejný jako za ano.</td></tr>
+    <tr><td><b>Losy do slosování</b></td><td>Počet, výpis a číslo, kam se výhra pošle.</td></tr>
+  </tbody>
+</table>
+<div class="note">
+  <b>Telefon se ptá až u losu</b>
+  <p>Karta samotná nechce nic — to je celé to kouzlo prvních tří vteřin. Kontakt se vyžaduje teprve ve chvíli, kdy si člověk bere los, protože tehdy je to v jeho zájmu, ne v našem.</p>
+</div>
+
+<h2 id="konzole"><span class="n">09</span>Konzole sítě</h2>
+<p>Pravidla schématu. Každý akceptační okruh je samostatná omezená síť s vlastním stropem — proto se dá růst a přitom zůstat mimo těžkou regulaci.</p>
+<ul>
+  <li><b>Karty okruhů</b> — objem za dvanáct měsíců proti stropu a předpověď, kdy na něj při daném tempu narazí. Posuvník růstu tu předpověď přepočítává živě.</li>
+  <li><b>Matice</b> — kdo do kterého okruhu vydává a co přijímá. Buňky se proklikávají: mimo okruh → vydává → přijímá → obojí.</li>
+  <li><b>Upozornění</b> — okruh bez akceptantů, bez vydavatelů, nebo úplně opuštěný.</li>
+</ul>
+<p>Vydávání a akceptace jsou dva různé seznamy. Provozovna může do okruhu vydávat, ale nepřijímat ho, a naopak.</p>
+
+<h2 id="ctecka"><span class="n">10</span>Čtečka</h2>
+<p>Nejjednodušší díl a historicky první. Přečte QR a vyloží, co v něm je — kód voucheru, pozvánka, peněženka, nebo něco cizího. <b>Neptá se nikoho</b>, takže neověřuje platnost ani zůstatek. Na placení používejte terminál.</p>
+
+<!-- ============ VYHODNOCENÍ ============ -->
+<h2 id="dashboard"><span class="n">11</span>Dashboard</h2>
+<div class="note w">
+  <b>Nepatří na web</b>
+  <p>Dashboard běží z disku, otevírá se dvojklikem. Data jsou uložená v tom konkrétním prohlížeči a v té konkrétní cestě k souboru — otevírejte ho vždy stejně, jinak uvidíte nuly.</p>
+</div>
+<h3>Jak se do něj dostanou data</h3>
+<ol class="steps">
+  <li><b>Tester ťukne Odeslat data</b>Dole v záložce Ukázka. Telefon nabídne sdílení.</li>
+  <li><b>Pošle to přes WhatsApp, SMS nebo mail</b>Je to text, žádný soubor.</li>
+  <li><b>Vložíte a dáte Načíst</b>Můžete vložit víc dávek najednou i stejného testera opakovaně — novější přepíše starší.</li>
+</ol>
+<h3>Co ukazuje</h3>
+<ul>
+  <li><b>Přehled</b> — testeři, ukázky, ano, ne, podíl ano, neúspěšné pokusy</li>
+  <li><b>Odpovědi provozoven</b> — rozpad na ano, ne a zapsaná místa</li>
+  <li><b>Proč ne</b> — žebříček důvodů. Tohle je jediné číslo, kvůli kterému se test dělá.</li>
+  <li><b>Podle testera</b> — kdo kolik ukázal a s jakým výsledkem</li>
+  <li><b>Poptávka</b> — pokusy, které neprošly, s částkami</li>
+  <li><b>Tikety</b> — kdo má kolik losů, s kontaktem</li>
+</ul>
+
+<h2 id="slosovani"><span class="n">12</span>Slosování</h2>
+<p>Z každého uplatněného kódu vzniknou dva tikety — jeden testerovi za ukázku, jeden provozovně za to, že odpověděla. Tiket dostane i ten, kdo řekl ne, takže se nikomu nevyplácí říkat ano.</p>
+<ol class="steps">
+  <li><b>Napište výhru</b>A vyberte skupinu — všichni, jen průzkumníci, nebo jen provozovny.</li>
+  <li><b>Vygenerujte seed a zveřejněte ho</b>Tohle je to podstatné. Seed musí ven <b>dřív</b>, než losování proběhne.</li>
+  <li><b>Losujte</b>Výsledek se spočítá z kombinace seedu a čísel tiketů, takže si ho každý může přepočítat.</li>
+  <li><b>Kolo se uloží</b>Se seedem, skupinou, počtem tiketů a výherci včetně kontaktu.</li>
+</ol>
+<div class="note">
+  <b>Proč na tom pořadí záleží</b>
+  <p>U testovacího kola je to formalita. U ostrého losování je to jediný důvod, proč vám lidé uvěří, že jste výherce nevybrali. Vyplatí se to nacvičit teď.</p>
+</div>
+
+<!-- ============ REFERENCE ============ -->
+<h2 id="reference"><span class="n">13</span>Referenční tabulky</h2>
+
+<h3>Chybové kódy</h3>
+<table>
+  <thead><tr><th>Kód</th><th>Význam</th><th>Co s tím</th></tr></thead>
+  <tbody>
+    <tr><td><code>00</code></td><td>Schváleno</td><td>Potvrdit čerpání</td></tr>
+    <tr><td><code>12</code></td><td>Neznámý voucher</td><td>Vydavatel není v síti — zaznamenat poptávku</td></tr>
+    <tr><td><code>33</code></td><td>Platnost vypršela</td><td>Nic, voucher propadl</td></tr>
+    <tr><td><code>51</code></td><td>Nedostatečný zůstatek</td><td>Nabídne se částečné čerpání</td></tr>
+    <tr><td><code>57</code></td><td>Okruh mimo akceptaci</td><td>Voucher platí, ale sem nepatří — ukáže se, kde ho vezmou</td></tr>
+    <tr><td><code>62</code></td><td>Voucher blokován</td><td>Vydavatel ho zablokoval, nebo nesedí podpis</td></tr>
+    <tr><td><code>91</code></td><td>Autorizace nedostupná</td><td>Offline nad limitem terminálu</td></tr>
+  </tbody>
+</table>
+
+<h3>Testovací vouchery</h3>
+<table>
+  <thead><tr><th>Kód</th><th>Vydavatel</th><th>Okruh</th><th>Zůstatek</th><th>Stav</th></tr></thead>
+  <tbody>
+    <tr><td><code>SPA-GIFT-3001</code></td><td>Lázně Mariánské</td><td>wellness</td><td>5 000 Kč</td><td>projde</td></tr>
+    <tr><td><code>SPA-GIFT-3002</code></td><td>Lázně Mariánské</td><td>wellness</td><td>1 200 Kč</td><td>propadlý</td></tr>
+    <tr><td><code>LUNA-GIFT-1001</code></td><td>Café Luna</td><td>gastro</td><td>1 500 Kč</td><td>projde</td></tr>
+    <tr><td><code>LUNA-GIFT-1002</code></td><td>Café Luna</td><td>gastro</td><td>180 Kč</td><td>nízký zůstatek</td></tr>
+    <tr><td><code>LUNA-GIFT-1011-KH7E</code></td><td>Café Luna</td><td>gastro</td><td>10 000 Kč</td><td>na dlouhé testy</td></tr>
+    <tr><td><code>GB-AMB-0001</code></td><td>Golden Blot</td><td>charita</td><td>800 Kč</td><td>kód 57</td></tr>
+    <tr><td><code>ROY-GIFT-4001</code></td><td>Hotel Royal</td><td>wellness</td><td>2 500 Kč</td><td>blokovaný</td></tr>
+  </tbody>
+</table>
+<p>Terminál je nastavený jako <b>Hotel Royal — recepce</b>, přijímá okruhy wellness a gastro, vydává do wellness. Proto Golden Blot vrátí kód 57 — není to chyba, je to ukázka toho, jak okruhy fungují.</p>
+
+<h2 id="technicke"><span class="n">14</span>Technické poznámky</h2>
+<h3>Bezserverový voucher</h3>
+<p>Kód nese zůstatek, platnost, okruh, vydavatele, značku toho, kdo kartu předal, a kontrolní blok. Terminál ho ověří podpisem, odečte a vygeneruje <b>nový kód s novým zůstatkem</b>. Proto se karta po každém čerpání musí přeskenovat.</p>
+<p>Funguje to bez internetu a bez databáze. Nevýhoda: kdo si QR vyfotí, má stejnou hodnotu jako držitel. Pro ukázku to nevadí, pro ostrý provoz to vyřeší až společná hlavní kniha.</p>
+
+<h3>Kontrolní blok</h3>
+<p>Čtyři znaky na konci kódu se počítají z pořadového čísla tajným klíčem. Je to stejný princip jako CVV u karty — bez klíče se nedá spočítat, i když algoritmus i vstup znáte. Terminál díky tomu pozná padělek <b>i offline</b>. Abeceda je bez znaků, které se pletou, aby se kód dal diktovat po telefonu.</p>
+
+<h3>Verze a mezipaměť</h3>
+<p>Dole na terminálu i na kartě je číslo verze. Když po nahrání nové verze číslo nesedí, drží prohlížeč starou — načtěte natvrdo, nebo zkuste anonymní okno. Service worker přednostně bere síť, takže se to obvykle nestává.</p>
+
+<h3>Aplikace na ploše</h3>
+<p>Po přidání na plochu běží bez adresního řádku. Když se ikona nebo režim nezmění, smažte starého zástupce a přidejte ho znovu — sám se nepřepne.</p>
+
+<h2 id="limity"><span class="n">15</span>Co zatím nefunguje</h2>
+<table>
+  <thead><tr><th>Chybí</th><th>Proč</th><th>Kdy</th></tr></thead>
+  <tbody>
+    <tr><td><b>Dvě zařízení nesdílejí data</b></td><td>Každý telefon má vlastní paměť. Voucher vydaný na počítači nebude na telefonu znát.</td><td>až se sdíleným hostem</td></tr>
+    <tr><td><b>Tester nevidí, co karta dělá dál</b></td><td>Proto ten potvrzovací kód — je to ruční náhrada za chybějící spojení.</td><td>až se sdíleným hostem</td></tr>
+    <tr><td><b>Renta a druhá úroveň řetězu</b></td><td>Nejde vyplácet z něčeho, co se nikde nesbírá.</td><td>až se sdíleným hostem</td></tr>
+    <tr><td><b>Dobíjení kartou</b></td><td>Obchodní podmínky se řeší začátkem září.</td><td>po 9. 9.</td></tr>
+    <tr><td><b>Poptávka z peněženky</b></td><td>V terminálu je, ale skutečná hodnota vzniká tam, kde terminál není.</td><td>návazně</td></tr>
+  </tbody>
+</table>
+
+<h2 id="potize"><span class="n">16</span>Když něco nejde</h2>
+<table>
+  <thead><tr><th>Příznak</th><th>Příčina a náprava</th></tr></thead>
+  <tbody>
+    <tr><td><b>Kamera se nespustí</b></td><td>Potřebuje HTTPS. Ze souboru na disku nepoběží — otevřete adresu na doméně. Zkontrolujte i povolení kamery v prohlížeči.</td></tr>
+    <tr><td><b>Snímá, ale nic nenačte</b></td><td>Přidejte jas na displeji, ze kterého skenujete, držte telefon asi 20 cm daleko a nakloňte ho, ať se do kódu neodráží. Vestavěné kamery notebooků mají krátkou ostrost — skenujte raději telefonem.</td></tr>
+    <tr><td><b>Zamítnuto kódem 12</b></td><td>Ten voucher tenhle terminál nezná. Buď je z jiného zařízení, nebo z jiné verze. Vydejte a uplatněte na stejném telefonu.</td></tr>
+    <tr><td><b>Zamítnuto kódem 57</b></td><td>Není to chyba. Voucher patří do okruhu, který tahle provozovna nepřijímá.</td></tr>
+    <tr><td><b>Kód od provozovny nesedí</b></td><td>Kód platí jen v terminálu, který kartu vydal. Zkontrolujte také, že máte novou verzi a že jste nevymazal seznam rozdaných karet.</td></tr>
+    <tr><td><b>Ikona je velké písmeno</b></td><td>Nenačetly se ikony. Smažte zástupce z plochy a přidejte ho znovu.</td></tr>
+    <tr><td><b>Dashboard je prázdný</b></td><td>Data jsou vázaná na prohlížeč a cestu k souboru. Otevírejte ho vždy stejně.</td></tr>
+  </tbody>
+</table>
+
+<p class="foot">
+  ROOMS MANAGEMENT s.r.o. · IČO 27433935 · srpen 2026<br>
+  Prototyp, ne hotový produkt. Žádné skutečné peníze, žádné účtování.<br>
+  Dotazy a postřehy posílejte tomu, kdo vám poslal odkaz.
+</p>
+</main>
+</div>
+</body>
+</html>
