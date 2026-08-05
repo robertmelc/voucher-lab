@@ -14,7 +14,7 @@
   --edge:rgba(255,255,255,.09); --edge-hot:rgba(255,255,255,.17);
   --violet:#22C7B0; --violet-lit:#6FE9DA;
   --ok:#46E39A; --warn:#F0B429; --bad:#E5786B;
-  --ink:#F2EEFA; --ink-2:#9A8CBB; --ink-3:#5F5382;
+  --ink:#EAF6F2; --ink-2:#8FA9A4; --ink-3:#5B7671;
   --mono:'JetBrains Mono',ui-monospace,monospace;
   --disp:'Bricolage Grotesque',system-ui,sans-serif;
   --body:'DM Sans',system-ui,sans-serif;
@@ -82,7 +82,7 @@ body{background:radial-gradient(130% 55% at 50% -8%,rgba(34,199,176,.18),transpa
 #demoPane{display:none;flex-direction:column;gap:14px}
 #demoPane.on{display:flex}
 .demoQR{background:#fff;border-radius:22px;padding:20px;display:grid;place-items:center;gap:12px}
-.demoQR p{margin:0;font-size:13px;color:#4A4459;text-align:center;line-height:1.5;font-weight:600}
+.demoQR p{margin:0;font-size:13px;color:#445B57;text-align:center;line-height:1.5;font-weight:600}
 .step{border:1px solid var(--edge);border-radius:15px;background:linear-gradient(180deg,var(--panel2),var(--panel));
   padding:14px 16px}
 .step .n{font-family:var(--mono);font-size:9px;letter-spacing:.16em;text-transform:uppercase;color:var(--violet-lit)}
@@ -101,8 +101,8 @@ body{background:radial-gradient(130% 55% at 50% -8%,rgba(34,199,176,.18),transpa
 dialog.qrd{border:0;background:none;padding:0;max-width:92vw}
 dialog.qrd::backdrop{background:rgba(4,16,13,.93)}
 .qrd .inner{background:#fff;border-radius:24px;padding:22px;display:grid;place-items:center;gap:12px}
-.qrd .inner p{margin:0;font-family:var(--mono);font-size:13px;color:#14121C;letter-spacing:.05em;text-align:center}
-.qrd .inner small{font-family:var(--body);font-size:12px;color:#6B6580}
+.qrd .inner p{margin:0;font-family:var(--mono);font-size:13px;color:#0F1A18;letter-spacing:.05em;text-align:center}
+.qrd .inner small{font-family:var(--body);font-size:12px;color:#5F7571}
 .demoLine{font-family:var(--disp);font-size:15px;font-weight:700;text-align:center;color:var(--violet-lit)}
 
 /* ---- překryv skenování ---- */
@@ -197,7 +197,7 @@ button:focus-visible,input:focus-visible,summary:focus-visible{outline:2px solid
 
   <div class="bar">
     <div class="mark">R</div>
-    <div class="who"><b>Hotel Royal — recepce</b><span id="tid">TERM 0042 · MID 8801</span></div>
+    <div class="who" id="whoBar" style="cursor:pointer"><b>Hotel Royal — recepce</b><span id="tid">TERM 0042 · MID 8801</span></div>
     <button class="link" id="link">● Online</button>
   </div>
   <div class="tabs">
@@ -283,7 +283,7 @@ button:focus-visible,input:focus-visible,summary:focus-visible{outline:2px solid
     <table id="helpTable"></table>
   </details>
 
-  <p class="foot">Demo terminál · autorizace běží lokálně<br>data jen v paměti prohlížeče · terminál v10</p>
+  <p class="foot">Demo terminál · autorizace běží lokálně<br>data jen v paměti prohlížeče · terminál v11</p>
 </div>
 
 <div class="sheet" id="issueSheet">
@@ -402,7 +402,7 @@ async function mcBuild(code,bal,exp,okruh,issuer,by){
   return body+'~'+await mcSign(body);
 }
 function mcUrl(payload){
-  return new URL('karta.html?v10',location.href).href+'#'+encodeURIComponent(payload);
+  return new URL('karta.html?v11',location.href).href+'#'+encodeURIComponent(payload);
 }
 
 /* ================= STAV ================= */
@@ -487,7 +487,7 @@ function setAgent(v){
   agentId=(v||'').trim().toUpperCase().replace(/[^A-Z0-9-]/g,'').slice(0,10)||'PRZ-0042';
   try{ localStorage.setItem('mc_agent',agentId); }catch(e){}
   TERMINAL.agent=agentId;
-  $('tid').textContent='TESTER '+agentId+' · MID '+TERMINAL.mid;
+  $('tid').textContent='TESTER '+agentId+' · klepnutím změníte';
   const f=$('agentIn'); if(f) f.value=agentId;
 }
 
@@ -588,6 +588,10 @@ async function newDemoCard(){
 }
 $('demoNew').onclick=newDemoCard;
 $('agentBtn').onclick=()=>{ setAgent($('agentIn').value); newDemoCard(); };
+$('whoBar').onclick=()=>{
+  const v=prompt('Značka testera — objeví se v číslech karet i v tom, kdo kartu předal:',agentId);
+  if(v!==null && v.trim()){ setAgent(v); if(mode==='demo') newDemoCard(); }
+};
 $('agentIn').addEventListener('keydown',e=>{ if(e.key==='Enter') $('agentBtn').click(); });
 
 $('go').onclick=()=>{
@@ -820,7 +824,7 @@ async function drawReceipt(rec){
   const M='"JetBrains Mono",monospace', D='"Bricolage Grotesque",system-ui,sans-serif';
   const sp=v=>{ try{ c.letterSpacing=v; }catch(e){} };
   c.fillStyle='#ffffff'; c.fillRect(0,0,W,H);
-  const INK='#14121C', DIM='#6B6580';
+  const INK='#0F1A18', DIM='#5F7571';
   let y=88;
   c.textAlign='center';
   c.fillStyle='#159C89'; c.font='700 20px '+M; sp('7px');
@@ -829,7 +833,7 @@ async function drawReceipt(rec){
   c.fillStyle=DIM; c.font='400 19px '+M;
   c.fillText('MID '+TERMINAL.mid+' · TERMINÁL '+TERMINAL.tid,W/2,y); y+=44;
 
-  const dash=(yy)=>{ c.strokeStyle='#D9D5E2'; c.lineWidth=2; c.setLineDash([7,8]);
+  const dash=(yy)=>{ c.strokeStyle='#D2DEDA'; c.lineWidth=2; c.setLineDash([7,8]);
     c.beginPath(); c.moveTo(64,yy); c.lineTo(W-64,yy); c.stroke(); c.setLineDash([]); };
   dash(y); y+=52;
 
@@ -857,7 +861,7 @@ async function drawReceipt(rec){
    'Účtenku vydává provozovna ze své kasy; tento',
    'doklad potvrzuje pouze způsob úhrady.'].forEach(t=>{ c.fillText(t,W/2,y); y+=28; });
   y+=18;
-  c.fillStyle='#A29CB5'; c.font='400 17px '+M; sp('3px');
+  c.fillStyle='#93A8A3'; c.font='400 17px '+M; sp('3px');
   c.fillText('DĚKUJEME ZA NÁVŠTĚVU',W/2,y); sp('0px');
   return cv.toDataURL('image/png');
 }
@@ -972,7 +976,7 @@ async function drawVoucher(code,amt,exp){
 
   // pozadí
   const g=c.createLinearGradient(0,0,0,H);
-  g.addColorStop(0,'#221A3E'); g.addColorStop(.55,'#0F211C'); g.addColorStop(1,'#08120F');
+  g.addColorStop(0,'#16302A'); g.addColorStop(.55,'#0F211C'); g.addColorStop(1,'#08120F');
   c.fillStyle=g; c.fillRect(0,0,W,H);
   const rg=c.createRadialGradient(W*.5,-H*.05,0,W*.5,-H*.05,W*.95);
   rg.addColorStop(0,'rgba(34,199,176,.35)'); rg.addColorStop(1,'rgba(34,199,176,0)');
@@ -988,10 +992,10 @@ async function drawVoucher(code,amt,exp){
   c.fillStyle='#6FE9DA'; c.font='600 26px '+MONO; sp('9px');
   c.fillText('DÁRKOVÝ POUKAZ',W/2,168); sp('0px');
 
-  c.fillStyle='#F2EEFA'; c.font='800 66px '+DISP;
+  c.fillStyle='#EAF6F2'; c.font='800 66px '+DISP;
   c.fillText('Hotel Royal',W/2,258);
 
-  c.fillStyle='#9A8CBB'; c.font='400 27px '+BODY;
+  c.fillStyle='#8FA9A4'; c.font='400 27px '+BODY;
   c.fillText('Lázně a wellness',W/2,306);
 
   // dělicí linka s perforací
@@ -1006,7 +1010,7 @@ async function drawVoucher(code,amt,exp){
   c.beginPath(); c.arc(W-44,364,30,0,7); c.stroke();
 
   // hodnota
-  c.fillStyle='#5F5382'; c.font='400 24px '+MONO; sp('7px');
+  c.fillStyle='#5B7671'; c.font='400 24px '+MONO; sp('7px');
   c.fillText('HODNOTA',W/2,442); sp('0px');
   c.fillStyle='#46E39A'; c.font='800 128px '+DISP;
   c.fillText(fmt(amt)+' Kč',W/2,566);
@@ -1019,28 +1023,28 @@ async function drawVoucher(code,amt,exp){
   if(q) c.drawImage(q,tx+30,ty+30,tile-60,tile-60);
 
   // kód
-  c.fillStyle='#F2EEFA'; c.font='700 44px '+MONO; sp('3px');
+  c.fillStyle='#EAF6F2'; c.font='700 44px '+MONO; sp('3px');
   c.fillText(code,W/2,ty+tile+82); sp('0px');
-  c.fillStyle='#5F5382'; c.font='400 23px '+BODY;
+  c.fillStyle='#5B7671'; c.font='400 23px '+BODY;
   c.fillText('Kód pro obsluhu, pokud QR nelze načíst',W/2,ty+tile+124);
 
   // údaje
   const rowY=ty+tile+206;
   const put=(x,lab,val)=>{
-    c.fillStyle='#5F5382'; c.font='400 21px '+MONO; sp('5px');
+    c.fillStyle='#5B7671'; c.font='400 21px '+MONO; sp('5px');
     c.fillText(lab,x,rowY); sp('0px');
-    c.fillStyle='#F2EEFA'; c.font='700 34px '+BODY;
+    c.fillStyle='#EAF6F2'; c.font='700 34px '+BODY;
     c.fillText(val,x,rowY+50);
   };
   put(W*.30,'PLATNOST DO',exp.toLocaleDateString('cs-CZ'));
   put(W*.70,'UPLATNÍTE V','Lázně a wellness');
 
   // patička
-  c.fillStyle='#9A8CBB'; c.font='400 23px '+BODY;
+  c.fillStyle='#8FA9A4'; c.font='400 23px '+BODY;
   const lines=['Poukaz uplatníte u provozoven zapojených v tomto okruhu.',
                'Hodnotu lze čerpat postupně, zbytek zůstává na poukazu.'];
   lines.forEach((t,i)=>c.fillText(t,W/2,H-206+i*36));
-  c.fillStyle='#5F5382'; c.font='400 20px '+MONO; sp('4px');
+  c.fillStyle='#5B7671'; c.font='400 20px '+MONO; sp('4px');
   c.fillText('VYDÁNO '+new Date().toLocaleDateString('cs-CZ')+' · TERMINÁL '+TERMINAL.tid+' · MID '+TERMINAL.mid,W/2,H-108);
   sp('0px');
 

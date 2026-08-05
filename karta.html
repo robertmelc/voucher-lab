@@ -20,7 +20,7 @@
 :root{
   --void:#08120F;--panel:#0F211C;--panel2:#163029;--edge:rgba(255,255,255,.09);--edge-hot:rgba(255,255,255,.18);
   --violet:#22C7B0;--violet-lit:#6FE9DA;--ok:#46E39A;--warn:#F0B429;--bad:#E5786B;
-  --ink:#F2EEFA;--ink2:#9A8CBB;--ink3:#5F5382;
+  --ink:#EAF6F2;--ink2:#8FA9A4;--ink3:#5B7671;
   --mono:'JetBrains Mono',ui-monospace,monospace;--disp:'Bricolage Grotesque',system-ui,sans-serif;--body:'DM Sans',system-ui,sans-serif;
 }
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
@@ -69,7 +69,7 @@ body{background:radial-gradient(125% 55% at 50% -8%,rgba(34,199,176,.22),transpa
   padding:9px 12px;font-size:11.5px;color:var(--warn);text-align:center;font-weight:700}
 .qrbox{background:#fff;border-radius:20px;padding:18px;display:grid;place-items:center;gap:12px}
 .qrbox #qr{display:grid;place-items:center}
-.qrbox p{margin:0;font-size:12.5px;color:#4A4459;text-align:center;line-height:1.5;font-weight:500}
+.qrbox p{margin:0;font-size:12.5px;color:#445B57;text-align:center;line-height:1.5;font-weight:500}
 
 .line{font-family:var(--disp);font-size:15px;font-weight:700;text-align:center;color:var(--violet-lit);
   letter-spacing:-.01em;opacity:.9}
@@ -120,7 +120,7 @@ body{background:radial-gradient(125% 55% at 50% -8%,rgba(34,199,176,.22),transpa
 dialog{border:0;background:none;padding:0;max-width:92vw}
 dialog::backdrop{background:rgba(4,16,13,.92)}
 .big{background:#fff;border-radius:24px;padding:22px;display:grid;place-items:center;gap:14px}
-.big p{margin:0;font-family:var(--mono);font-size:13px;color:#14121C;letter-spacing:.04em}
+.big p{margin:0;font-family:var(--mono);font-size:13px;color:#0F1A18;letter-spacing:.04em}
 </style>
 </head>
 <body>
@@ -262,7 +262,7 @@ async function render(){
     return;
   }
 
-  const url=location.origin+location.pathname+'?v10#'+encodeURIComponent(raw.slice(raw.indexOf('MC1~')));
+  const url=location.origin+location.pathname+'?v11#'+encodeURIComponent(raw.slice(raw.indexOf('MC1~')));
   window.__okruh=v.okruh; window.__demo=!!v.demo; window.__by=v.by||''; window.__code=v.code;
 
   wrap.innerHTML=
@@ -287,7 +287,7 @@ async function render(){
     '<button class="btn" id="rejBtn">Tady to nevzali — získat los</button>'+
     '<div class="two"><button class="btn" id="wantBtn">Chci to pro svůj podnik</button>'+
     '<button class="btn" id="noBtn">Zatím ne</button></div>'+
-    '<p class="foot">Ukázková karta · bez serveru · hodnota je v odkazu · karta v10</p>';
+    '<p class="foot">Ukázková karta · bez serveru · hodnota je v odkazu · karta v11</p>';
 
   new QRCode(document.getElementById('qr'),{text:url,width:210,height:210,
     colorDark:'#08120F',colorLight:'#ffffff',correctLevel:QRCode.CorrectLevel.M});
