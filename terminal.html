@@ -301,7 +301,7 @@ button:focus-visible,input:focus-visible,summary:focus-visible{outline:2px solid
   </details>
 
   <div class="wordmark"><img src="icon-192.png" alt=""><span>mooncher</span></div>
-  <p class="foot">Demo terminál · autorizace běží lokálně<br>data jen v paměti prohlížeče · terminál v15</p>
+  <p class="foot">Demo terminál · autorizace běží lokálně<br>data jen v paměti prohlížeče · terminál v16</p>
 </div>
 
 <div class="sheet" id="issueSheet">
@@ -407,16 +407,20 @@ async function mcSign(body){
   return mcAbc(b,6);
 }
 function mcParse(raw){
-  const t=(raw||'').trim(); const i=t.indexOf('MC1~');
+  let t=(raw||'').trim();
+  if(t.indexOf('MC1~')<0){ try{ const d=unb64u(t.split('#').pop()); if(d.indexOf('MC1~')===0) t=d; }catch(e){} }
+  const i=t.indexOf('MC1~');
   if(i<0) return null;
-  const p=decodeURIComponent(t.slice(i)).split('~');
+  const p=t.slice(i).split('~');
   if(p.length<8) return null;
-  return {code:p[1],bal:Number(p[2]),exp:p[3],okruh:p[4],issuer:decodeURIComponent(p[5]),
-          by:decodeURIComponent(p[6]),sig:p[7],body:p.slice(0,7).join('~')};
+  return {code:p[1],bal:Number(p[2]),exp:p[3],okruh:p[4],issuer:p[5],
+          by:p[6],sig:p[7],body:p.slice(0,7).join('~')};
 }
+function mcClean(v){ return String(v==null?'':v).replace(/~/g,'-').trim(); }
 async function mcBuild(code,bal,exp,okruh,issuer,by){
-  const body=['MC1',code,bal,exp,okruh,encodeURIComponent(issuer),
-              encodeURIComponent(by||TERMINAL.agent)].join('~');
+  /* bez procentového kódování — text jde do adresy v base64url, takže se nemá co rozkódovat */
+  const body=['MC1',mcClean(code),bal,mcClean(exp),mcClean(okruh),
+              mcClean(issuer),mcClean(by||TERMINAL.agent)].join('~');
   return body+'~'+await mcSign(body);
 }
 function b64u(str){
@@ -433,7 +437,7 @@ function unb64u(s){
 }
 function mcUrl(payload){
   /* base64url — v adrese pak nejsou procenta, která některé prohlížeče samy rozkódují */
-  return new URL('karta.html?v15',location.href).href+'#'+b64u(payload);
+  return new URL('karta.html?v16',location.href).href+'#'+b64u(payload);
 }
 
 /* ================= STAV ================= */

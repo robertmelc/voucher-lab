@@ -188,6 +188,7 @@ dialog::backdrop{background:rgba(4,16,13,.92)}
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <script>
 const KEY='mooncher-demo-2026';
+const VERZE='v16';
 const fmt=n=>Number(n).toLocaleString('cs-CZ');
 const OKRUHY={wellness:'Lázně a wellness',gastro:'Stravování',charita:'Charitativní pomoc'};
 
@@ -256,8 +257,8 @@ function parse(raw){
   if(i<0) return null;
   const p=t.slice(i).split('~');
   if(p.length<8) return null;
-  return {code:p[1],bal:Number(p[2]),exp:p[3],okruh:p[4],issuer:decodeURIComponent(p[5]),
-          by:decodeURIComponent(p[6]),sig:p[7],body:p.slice(0,7).join('~'),
+  return {code:p[1],bal:Number(p[2]),exp:p[3],okruh:p[4],issuer:p[5],
+          by:p[6],sig:p[7],body:p.slice(0,7).join('~'),
           demo:/^DEMO-/i.test(p[1])};
 }
 
@@ -278,12 +279,17 @@ async function render(){
   }
   const want=await sign(v.body);
   if(want!==v.sig){
-    wrap.innerHTML='<div class="bad"><b>Neplatný podpis</b><p>Kód nesouhlasí s kontrolním blokem. '+
-      'Buď se při přenosu poškodil, nebo nepochází z této sítě.</p></div>';
+    const esc=x=>String(x).replace(/[<>&]/g,c=>({'<':'&lt;','>':'&gt;','&':'&amp;'}[c]));
+    wrap.innerHTML='<div class="bad"><b>Neplatný podpis</b>'+
+      '<p>Kód nesouhlasí s kontrolním blokem. Nejčastěji to znamená, že terminál a karta nemají stejnou verzi — '+
+      'nahrajte obojí znovu a načtěte natvrdo.</p>'+
+      '<p style="margin-top:12px;font-family:var(--mono);font-size:10.5px;color:var(--ink3);word-break:break-all">'+
+      'v ' + VERZE + ' · čekáno ' + esc(want) + ' · v kódu ' + esc(v.sig) +
+      '<br>podepsaný text: ' + esc(v.body) + '</p></div>';
     return;
   }
 
-  const url=location.origin+location.pathname+'?v15#'+b64u(raw.slice(raw.indexOf('MC1~')));
+  const url=location.origin+location.pathname+'?v16#'+b64u(raw.slice(raw.indexOf('MC1~')));
   window.__okruh=v.okruh; window.__demo=!!v.demo; window.__by=v.by||''; window.__code=v.code;
 
   wrap.innerHTML=
@@ -311,7 +317,7 @@ async function render(){
     '<div class="two"><button class="btn" id="wantBtn">Chci to pro svůj podnik</button>'+
     '<button class="btn" id="noBtn">Zatím ne</button></div>'+
     '<div class="wordmark"><img src="icon-192.png" alt=""><span>mooncher</span></div>'+
-    '<p class="foot">Ukázková karta · bez serveru · hodnota je v odkazu · karta v15</p>';
+    '<p class="foot">Ukázková karta · bez serveru · hodnota je v odkazu · karta v16</p>';
 
   new QRCode(document.getElementById('qr'),{text:url,width:210,height:210,
     colorDark:'#08120F',colorLight:'#ffffff',correctLevel:QRCode.CorrectLevel.M});
