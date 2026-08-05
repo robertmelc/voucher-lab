@@ -42,6 +42,11 @@ body{background:radial-gradient(125% 55% at 50% -8%,rgba(157,92,246,.22),transpa
 
 .by{margin-top:12px;font-size:11.5px;color:var(--ink3);font-family:var(--mono);letter-spacing:.04em}
 .by b{color:var(--violet-lit);font-weight:700}
+.gdpr{font-size:11px;color:var(--ink3);line-height:1.55;margin:-6px 0 14px}
+.phoneline{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-top:11px;
+  padding-top:10px;border-top:1px dashed rgba(255,255,255,.12);font-family:var(--mono);font-size:11px;color:var(--ink3)}
+.phoneline button{background:none;border:0;color:var(--violet-lit);font:inherit;cursor:pointer;padding:0;
+  text-decoration:underline}
 .conf{border:1px solid rgba(157,92,246,.45);background:rgba(157,92,246,.12);border-radius:14px;
   padding:15px;margin-top:14px;text-align:center}
 .conf b{display:block;font-family:var(--disp);font-size:14px;margin-bottom:8px}
@@ -120,8 +125,27 @@ dialog::backdrop{background:rgba(5,4,10,.92)}
     <label>Kolik jste tam chtěl utratit</label>
     <input id="rejAmt" type="number" inputmode="numeric" placeholder="200" autocomplete="off">
     <div class="chips" id="rejChips"></div>
+    <div id="phoneWrap">
+      <label>Telefon — kam vám dáme vědět o výhře</label>
+      <input id="rejPhone" type="tel" inputmode="tel" placeholder="+420 777 123 456" autocomplete="tel">
+      <p class="gdpr">Bez čísla vám výhru nemáme jak oznámit. Použijeme ho jen na losování, nikam ho nepředáváme a kdykoli si můžete říct o smazání.</p>
+    </div>
     <button class="btn pri" id="rejSave">Uložit a získat los</button>
     <button class="btn" id="rejClose" style="margin-top:8px">Zpět</button>
+  </div>
+</div>
+
+<div class="sheet" id="bizSheet">
+  <div class="pane">
+    <h3>Chci to pro svůj podnik</h3>
+    <p class="s">Necháte nám kontakt a ozveme se. Zároveň tím získáte los do slosování.</p>
+    <label>Název podniku</label>
+    <input id="bizName" placeholder="např. Bar U Kotvy" autocomplete="off">
+    <label>Telefon</label>
+    <input id="bizPhone" type="tel" inputmode="tel" placeholder="+420 777 123 456" autocomplete="tel">
+    <p class="gdpr">Kontakt použijeme jen k tomu, abychom se vám ozvali a oznámili případnou výhru.</p>
+    <button class="btn pri" id="bizSave">Odeslat</button>
+    <button class="btn" id="bizClose" style="margin-top:8px">Zpět</button>
   </div>
 </div>
 
@@ -241,6 +265,7 @@ async function render(){
   document.getElementById('rejBtn').onclick=()=>{
     document.getElementById('rejName').value='';
     document.getElementById('rejAmt').value='';
+    document.getElementById('phoneWrap').style.display = phone ? 'none' : '';
     document.getElementById('rejSheet').classList.add('on');
     setTimeout(()=>document.getElementById('rejName').focus(),150);
   };
@@ -252,11 +277,26 @@ async function render(){
     if(e.target.dataset.a) document.getElementById('rejAmt').value=e.target.dataset.a;
   };
 
-  document.getElementById('wantBtn').onclick=e=>{
-    e.target.textContent='Ozveme se — díky!';
-    e.target.classList.add('pri');
-    e.target.disabled=true;
-    actionCode(v.code,'biz').then(c=>showConf(c,'Za zájem o vlastní podnik.'));
+  document.getElementById('wantBtn').onclick=()=>{
+    document.getElementById('bizPhone').value=phone||'';
+    document.getElementById('bizSheet').classList.add('on');
+    setTimeout(()=>document.getElementById('bizName').focus(),150);
+  };
+  document.getElementById('bizClose').onclick=()=>document.getElementById('bizSheet').classList.remove('on');
+  document.getElementById('bizSave').onclick=()=>{
+    const nm=document.getElementById('bizName').value.trim();
+    const ph=document.getElementById('bizPhone').value.trim();
+    const b=document.getElementById('bizSave');
+    if(!nm){ document.getElementById('bizName').focus(); return; }
+    if(!okPhone(ph)){ document.getElementById('bizPhone').focus();
+      b.textContent='Zadejte platné telefonní číslo';
+      setTimeout(()=>b.textContent='Odeslat',1800); return; }
+    setPhone(ph);
+    document.getElementById('bizSheet').classList.remove('on');
+    const wb=document.getElementById('wantBtn');
+    wb.textContent='Ozveme se — díky!'; wb.classList.add('pri'); wb.disabled=true;
+    paintTix();
+    actionCode(v.code,'biz').then(c=>showConf(c,'Za zájem o vlastní podnik — '+nm+'.'));
   };
 }
 /* ---------- losy za odmítnutí ---------- */
@@ -265,6 +305,11 @@ const KDE={wellness:['Hotel Royal','Lázně Mariánské','Penzion U Lípy'],
            gastro:['Café Luna','Hotel Royal — restaurace'],
            charita:['Wellness Klub Ostrava']};
 let tix=[];
+
+let phone=''; try{ phone=localStorage.getItem('mc_phone')||''; }catch(e){}
+function setPhone(v){ phone=v; try{ localStorage.setItem('mc_phone',v); }catch(e){} }
+function okPhone(v){ return (v||'').replace(/\D/g,'').length>=9; }
+function maskPhone(v){ const d=(v||'').replace(/\D/g,''); return d.length<6?v:'…'+d.slice(-6,-3)+' '+d.slice(-3); }
 
 function store(v){ try{ localStorage.setItem('mc_tix',JSON.stringify(v)); }catch(e){} }
 function load(){ try{ return JSON.parse(localStorage.getItem('mc_tix')||'[]'); }catch(e){ return []; } }
@@ -277,6 +322,9 @@ function monthCount(){
 function paintTix(){
   const box=document.getElementById('tix'); if(!box) return;
   const left=Math.max(0,CAP_MONTH-monthCount());
+  const pline = phone
+    ? '<div class="phoneline"><span>Výhru pošleme na '+maskPhone(phone)+'</span><button id="phEdit">změnit</button></div>'
+    : '<div class="phoneline"><span>Číslo zatím nemáme — bez něj výhru nedoručíme</span></div>';
   box.innerHTML=
     '<div class="top"><b>Losy do slosování</b><span class="cnt">'+
       tix.filter(t=>!t.demo).length+(window.__demo?' <span style="font-size:12px;color:var(--ink3)">+ '+
@@ -284,7 +332,12 @@ function paintTix(){
     '<p>Los dostanete i za místo, kde kartu nevzali. Jedno místo se počítá jednou, '+
     (left?('tento měsíc zbývá '+left+'.'):'tento měsíc už máte strop.')+'</p>'+
     (tix.length?'<ul>'+tix.slice(0,5).map(t=>'<li><span>'+t.name+'</span><span>'+
-      new Date(t.at).toLocaleDateString('cs-CZ')+'</span></li>').join('')+'</ul>':'');
+      new Date(t.at).toLocaleDateString('cs-CZ')+'</span></li>').join('')+'</ul>':'')+pline;
+  const pe=document.getElementById('phEdit');
+  if(pe) pe.onclick=()=>{
+    const v=prompt('Telefon pro oznámení výhry:',phone);
+    if(v!==null && okPhone(v)){ setPhone(v.trim()); paintTix(); }
+  };
 }
 
 function saveReject(){
@@ -292,6 +345,13 @@ function saveReject(){
   const amt=Number(document.getElementById('rejAmt').value)||0;
   const btn=document.getElementById('rejSave');
   if(!name){ document.getElementById('rejName').focus(); return; }
+  if(!phone){
+    const t=document.getElementById('rejPhone').value.trim();
+    if(!okPhone(t)){ document.getElementById('rejPhone').focus();
+      btn.textContent='Bez čísla vám výhru nedoručíme';
+      setTimeout(()=>btn.textContent='Uložit a získat los',2000); return; }
+    setPhone(t);
+  }
   const key=name.toLowerCase();
   if(tix.some(t=>t.key===key)){ btn.textContent='Tohle místo už máte zapsané'; 
     setTimeout(()=>btn.textContent='Uložit a získat los',1800); return; }
