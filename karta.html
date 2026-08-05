@@ -131,7 +131,7 @@ dialog::backdrop{background:rgba(5,4,10,.92)}
     <input id="rejAmt" type="number" inputmode="numeric" placeholder="200" autocomplete="off">
     <div class="chips" id="rejChips"></div>
     <div id="phoneWrap">
-      <label>Telefon — kam vám dáme vědět o výhře</label>
+      <label id="rejPhoneLab">Telefon — kam vám dáme vědět o výhře</label>
       <input id="rejPhone" type="tel" inputmode="tel" placeholder="+420 777 123 456" autocomplete="tel">
       <p class="gdpr">Bez čísla vám výhru nemáme jak oznámit. Použijeme ho jen na losování, nikam ho nepředáváme a kdykoli si můžete říct o smazání.</p>
     </div>
@@ -147,7 +147,7 @@ dialog::backdrop{background:rgba(5,4,10,.92)}
     <label>Hlavní důvod</label>
     <div class="why" id="whyList"></div>
     <div id="noPhoneWrap">
-      <label>Telefon — kam vám dáme vědět o výhře</label>
+      <label id="noPhoneLab">Telefon — kam vám dáme vědět o výhře</label>
       <input id="noPhone" type="tel" inputmode="tel" placeholder="+420 777 123 456" autocomplete="tel">
       <p class="gdpr">Bez čísla vám výhru nemáme jak oznámit. Použijeme ho jen na losování.</p>
     </div>
@@ -255,7 +255,7 @@ async function render(){
     return;
   }
 
-  const url=location.origin+location.pathname+'#'+encodeURIComponent(raw.slice(raw.indexOf('MC1~')));
+  const url=location.origin+location.pathname+'?v7#'+encodeURIComponent(raw.slice(raw.indexOf('MC1~')));
   window.__okruh=v.okruh; window.__demo=!!v.demo; window.__by=v.by||''; window.__code=v.code;
 
   wrap.innerHTML=
@@ -280,7 +280,7 @@ async function render(){
     '<button class="btn" id="rejBtn">Tady to nevzali — získat los</button>'+
     '<div class="two"><button class="btn" id="wantBtn">Chci to pro svůj podnik</button>'+
     '<button class="btn" id="noBtn">Zatím ne</button></div>'+
-    '<p class="foot">Ukázková karta · bez serveru · hodnota je v odkazu</p>';
+    '<p class="foot">Ukázková karta · bez serveru · hodnota je v odkazu · karta v7</p>';
 
   new QRCode(document.getElementById('qr'),{text:url,width:210,height:210,
     colorDark:'#0A0912',colorLight:'#ffffff',correctLevel:QRCode.CorrectLevel.M});
@@ -300,7 +300,9 @@ async function render(){
   document.getElementById('rejBtn').onclick=()=>{
     document.getElementById('rejName').value='';
     document.getElementById('rejAmt').value='';
-    document.getElementById('phoneWrap').style.display = phone ? 'none' : '';
+    document.getElementById('rejPhone').value=phone||'';
+    document.getElementById('rejPhoneLab').textContent = phone
+      ? 'Telefon — uložený, můžete změnit' : 'Telefon — kam vám dáme vědět o výhře';
     document.getElementById('rejSheet').classList.add('on');
     setTimeout(()=>document.getElementById('rejName').focus(),150);
   };
@@ -328,21 +330,20 @@ async function render(){
       .forEach(x=>x.classList.toggle('on',x===b));
   };
   document.getElementById('noBtn').onclick=()=>{
-    document.getElementById('noPhoneWrap').style.display = phone ? 'none' : '';
     document.getElementById('noPhone').value=phone||'';
+    document.getElementById('noPhoneLab').textContent = phone
+      ? 'Telefon — uložený, můžete změnit' : 'Telefon — kam vám dáme vědět o výhře';
     document.getElementById('noSheet').classList.add('on');
   };
   document.getElementById('noClose').onclick=()=>document.getElementById('noSheet').classList.remove('on');
   document.getElementById('noSave').onclick=()=>{
     const b=document.getElementById('noSave');
     if(!why){ b.textContent='Vyberte prosím důvod'; setTimeout(()=>b.textContent='Odeslat a získat los',1800); return; }
-    if(!phone){
-      const t=document.getElementById('noPhone').value.trim();
-      if(!okPhone(t)){ document.getElementById('noPhone').focus();
-        b.textContent='Bez čísla vám výhru nedoručíme';
-        setTimeout(()=>b.textContent='Odeslat a získat los',2000); return; }
-      setPhone(t);
-    }
+    const t=document.getElementById('noPhone').value.trim();
+    if(!okPhone(t)){ document.getElementById('noPhone').focus();
+      b.textContent='Bez čísla vám výhru nedoručíme';
+      setTimeout(()=>b.textContent='Odeslat a získat los',2000); return; }
+    setPhone(t);
     document.getElementById('noSheet').classList.remove('on');
     const nb=document.getElementById('noBtn');
     nb.textContent='Díky za odpověď'; nb.disabled=true;
@@ -418,13 +419,11 @@ function saveReject(){
   const amt=Number(document.getElementById('rejAmt').value)||0;
   const btn=document.getElementById('rejSave');
   if(!name){ document.getElementById('rejName').focus(); return; }
-  if(!phone){
-    const t=document.getElementById('rejPhone').value.trim();
-    if(!okPhone(t)){ document.getElementById('rejPhone').focus();
-      btn.textContent='Bez čísla vám výhru nedoručíme';
-      setTimeout(()=>btn.textContent='Uložit a získat los',2000); return; }
-    setPhone(t);
-  }
+  const ph=document.getElementById('rejPhone').value.trim();
+  if(!okPhone(ph)){ document.getElementById('rejPhone').focus();
+    btn.textContent='Bez čísla vám výhru nedoručíme';
+    setTimeout(()=>btn.textContent='Uložit a získat los',2000); return; }
+  setPhone(ph);
   const key=name.toLowerCase();
   if(tix.some(t=>t.key===key)){ btn.textContent='Tohle místo už máte zapsané'; 
     setTimeout(()=>btn.textContent='Uložit a získat los',1800); return; }

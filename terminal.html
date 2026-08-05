@@ -274,7 +274,7 @@ button:focus-visible,input:focus-visible,summary:focus-visible{outline:2px solid
     <table id="helpTable"></table>
   </details>
 
-  <p class="foot">Demo terminál · autorizace běží lokálně<br>data jen v paměti prohlížeče</p>
+  <p class="foot">Demo terminál · autorizace běží lokálně<br>data jen v paměti prohlížeče · terminál v7</p>
 </div>
 
 <div class="sheet" id="issueSheet">
@@ -393,7 +393,7 @@ async function mcBuild(code,bal,exp,okruh,issuer,by){
   return body+'~'+await mcSign(body);
 }
 function mcUrl(payload){
-  return new URL('karta.html',location.href).href+'#'+encodeURIComponent(payload);
+  return new URL('karta.html?v7',location.href).href+'#'+encodeURIComponent(payload);
 }
 
 /* ================= STAV ================= */
