@@ -199,6 +199,13 @@ button:focus-visible,input:focus-visible,summary:focus-visible{outline:2px solid
     </div>
   </div>
 
+  <div class="jr" id="demandBox" hidden>
+    <h2>Poptávka po rozšíření <span id="dSum" style="color:var(--warn);letter-spacing:0"></span></h2>
+    <div id="dRows"></div>
+    <p class="foot" style="text-align:left;margin-top:10px;line-height:1.7">
+      Každý řádek je zákazník, který u vás chtěl zaplatit a odešel.<br>Data pro jednání o rozšíření sítě.</p>
+  </div>
+
   <details class="help">
     <summary>Testovací vouchery a chybové kódy</summary>
     <table id="helpTable"></table>
@@ -272,6 +279,13 @@ const HOST={
   'LUNA-GIFT-1011-KH7E':{issuer:'Café Luna',okruh:'gastro',balance:10000,expires:'2027-12-31',status:'ok'}
 };
 
+/* kdo v okolí daný okruh přijímá — pro nasměrování držitele */
+const KDE={
+  wellness:['Hotel Royal · recepce','Lázně Mariánské · 3 provozovny','Penzion U Lípy'],
+  gastro:['Café Luna · Hlavní 12','Hotel Royal · restaurace','Penzion U Lípy'],
+  charita:['Wellness Klub Ostrava']
+};
+
 const REASONS={
   '00':'Schváleno','12':'Neznámý voucher','33':'Platnost vypršela',
   '51':'Nedostatečný zůstatek','57':'Okruh mimo akceptaci provozovny',
@@ -280,6 +294,7 @@ const REASONS={
 
 /* ================= STAV ================= */
 let amount=0, online=true, journal=[], pending=null, seq=1;
+let demand=[];   // zaznamenané pokusy, které neprošly — poptávka po rozšíření sítě
 let mode='accept', issueProg='wellness', issueVal=12, issueDel='sms', issueSeq=5000;
 
 /* ================= AUTORIZACE ================= */
@@ -462,8 +477,15 @@ function render(r){
     acts='<button class="btn pri full" id="partial">Čerpat '+fmt(r.partial)+' Kč</button>'
         +'<button class="btn gho full" id="dismiss" style="margin-top:8px">Zavřít</button>';
   }else if(r.rc==='57'){
-    note='Voucher je platný, ale patří do okruhu, který tato provozovna nepřijímá. Rozšíření okruhu řeší vydavatel se správcem sítě.';
-    acts='<button class="btn gho full" id="dismiss">Zavřít</button>';
+    const list=(r.v&&KDE[r.v.okruh])?KDE[r.v.okruh]:[];
+    note='Voucher je platný, ale patří do okruhu '+(r.v?OKRUHY[r.v.okruh]:'—')+', který tato provozovna nepřijímá.'
+      +(list.length?' V okolí ho vezmou zde: '+list.join(' · ')+'.':'');
+    acts='<button class="btn pri full" id="want">Zaznamenat poptávku</button>'
+        +'<button class="btn gho full" id="dismiss" style="margin-top:8px">Zavřít</button>';
+  }else if(r.rc==='12'){
+    note='Tenhle kód síť nezná — nejspíš patří vydavateli, který v ní zatím není. Záznam pomůže zjistit, o čí vouchery je u vás zájem.';
+    acts='<button class="btn pri full" id="want">Zaznamenat poptávku</button>'
+        +'<button class="btn gho full" id="dismiss" style="margin-top:8px">Zavřít</button>';
   }else{
     note='Transakce neproběhla. Zákazníkovi se nic neodečetlo.';
     acts='<button class="btn gho full" id="dismiss">Zavřít</button>';
@@ -481,6 +503,12 @@ function render(r){
   if(par) par.onclick=()=>{ const a=r.partial; const rr=authorize(r.code,a); rr.amount=a; capture(a,rr); };
   if(dis) dis.onclick=clear;
   if(vd) vd.onclick=clear;
+  const wnt=$('want');
+  if(wnt) wnt.onclick=()=>{
+    demand.unshift({code:r.code||'—', rc:r.rc, amt:(r.amount!==undefined?r.amount:amount),
+      okruh:r.v?OKRUHY[r.v.okruh]:'neznámý vydavatel', at:new Date()});
+    paintDemand(); clear();
+  };
 }
 
 function capture(amt,r){
@@ -609,8 +637,22 @@ $('close').onclick=()=>{
     'Uplatněno: '+inn.length+' ks / '+fmt(si)+' Kč\n'+
     'Saldo závazků: '+(so-si>=0?'+':'')+fmt(so-si)+' Kč\n'+
     'Ve frontě offline: '+inn.filter(t=>t.queued).length+'\n'+
-    'Storn: '+journal.filter(t=>t.void).length);
+    'Storn: '+journal.filter(t=>t.void).length+
+    (demand.length?'\n\nNeuskutečněno pro chybějící členství: '+demand.length+
+      ' × / '+fmt(demand.reduce((a,d)=>a+d.amt,0))+' Kč':''));
 };
+
+function paintDemand(){
+  if(!demand.length){ $('demandBox').hidden=true; return; }
+  $('demandBox').hidden=false;
+  const sum=demand.reduce((a,d)=>a+d.amt,0);
+  $('dSum').textContent='· '+demand.length+' × · '+fmt(sum)+' Kč';
+  $('dRows').innerHTML=demand.map(d=>
+    '<div class="tx q"><i></i><div class="c"><b>'+d.code+'</b><span>'+
+    (d.rc==='57'?'chybí okruh '+d.okruh:'neznámý vydavatel')+' · '+
+    d.at.toLocaleTimeString('cs-CZ',{hour:'2-digit',minute:'2-digit'})+
+    '</span></div><div class="amt" style="color:var(--warn)">'+fmt(d.amt)+' Kč</div></div>').join('');
+}
 
 /* ================= NÁPOVĚDA ================= */
 $('helpTable').innerHTML=
