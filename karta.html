@@ -237,6 +237,18 @@ async function sign(payload){
 const ABC='ACDEFGHJKLMNPQRTUVWXY34679';
 function toAbc(bytes,n){ let o=''; for(let i=0;i<n;i++) o+=ABC[bytes[i]%ABC.length]; return o; }
 
+function b64u(str){
+  const by=new TextEncoder().encode(str); let bin='';
+  by.forEach(b=>bin+=String.fromCharCode(b));
+  return btoa(bin).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
+}
+function unb64u(s){
+  s=String(s||'').replace(/-/g,'+').replace(/_/g,'/');
+  while(s.length%4) s+='=';
+  const bin=atob(s), by=new Uint8Array(bin.length);
+  for(let i=0;i<bin.length;i++) by[i]=bin.charCodeAt(i);
+  return new TextDecoder().decode(by);
+}
 /* payload: MC1~kód~zůstatek~platnost~okruh~vydavatel~předal */
 function parse(raw){
   const t=(raw||'').trim();
@@ -252,7 +264,10 @@ function parse(raw){
 function el(html){ const d=document.createElement('div'); d.innerHTML=html.trim(); return d.firstElementChild; }
 
 async function render(){
-  const raw=decodeURIComponent(location.hash.slice(1));
+  /* base64url je hlavní formát; procentové kódování necháme kvůli starším odkazům */
+  let raw=location.hash.slice(1);
+  try{ const dec=unb64u(raw); if(dec.indexOf('MC1~')===0) raw=dec; }catch(e){}
+  if(raw.indexOf('MC1~')<0){ try{ raw=decodeURIComponent(location.hash.slice(1)); }catch(e){} }
   const wrap=document.getElementById('wrap');
   const v=parse(raw);
 
@@ -268,7 +283,7 @@ async function render(){
     return;
   }
 
-  const url=location.origin+location.pathname+'?v12#'+encodeURIComponent(raw.slice(raw.indexOf('MC1~')));
+  const url=location.origin+location.pathname+'?v15#'+b64u(raw.slice(raw.indexOf('MC1~')));
   window.__okruh=v.okruh; window.__demo=!!v.demo; window.__by=v.by||''; window.__code=v.code;
 
   wrap.innerHTML=
@@ -296,7 +311,7 @@ async function render(){
     '<div class="two"><button class="btn" id="wantBtn">Chci to pro svůj podnik</button>'+
     '<button class="btn" id="noBtn">Zatím ne</button></div>'+
     '<div class="wordmark"><img src="icon-192.png" alt=""><span>mooncher</span></div>'+
-    '<p class="foot">Ukázková karta · bez serveru · hodnota je v odkazu · karta v12</p>';
+    '<p class="foot">Ukázková karta · bez serveru · hodnota je v odkazu · karta v15</p>';
 
   new QRCode(document.getElementById('qr'),{text:url,width:210,height:210,
     colorDark:'#08120F',colorLight:'#ffffff',correctLevel:QRCode.CorrectLevel.M});

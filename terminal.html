@@ -301,7 +301,7 @@ button:focus-visible,input:focus-visible,summary:focus-visible{outline:2px solid
   </details>
 
   <div class="wordmark"><img src="icon-192.png" alt=""><span>mooncher</span></div>
-  <p class="foot">Demo terminál · autorizace běží lokálně<br>data jen v paměti prohlížeče · terminál v14</p>
+  <p class="foot">Demo terminál · autorizace běží lokálně<br>data jen v paměti prohlížeče · terminál v15</p>
 </div>
 
 <div class="sheet" id="issueSheet">
@@ -419,8 +419,21 @@ async function mcBuild(code,bal,exp,okruh,issuer,by){
               encodeURIComponent(by||TERMINAL.agent)].join('~');
   return body+'~'+await mcSign(body);
 }
+function b64u(str){
+  const by=new TextEncoder().encode(str); let bin='';
+  by.forEach(b=>bin+=String.fromCharCode(b));
+  return btoa(bin).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
+}
+function unb64u(s){
+  s=String(s||'').replace(/-/g,'+').replace(/_/g,'/');
+  while(s.length%4) s+='=';
+  const bin=atob(s), by=new Uint8Array(bin.length);
+  for(let i=0;i<bin.length;i++) by[i]=bin.charCodeAt(i);
+  return new TextDecoder().decode(by);
+}
 function mcUrl(payload){
-  return new URL('karta.html?v14',location.href).href+'#'+encodeURIComponent(payload);
+  /* base64url — v adrese pak nejsou procenta, která některé prohlížeče samy rozkódují */
+  return new URL('karta.html?v15',location.href).href+'#'+b64u(payload);
 }
 
 /* ================= STAV ================= */
