@@ -479,10 +479,12 @@ async function redeemConf(){
   const raw=($('confIn').value||'').trim().toUpperCase();
   const msg=$('confMsg');
   if(raw.length<4){ msg.textContent='Zadejte celý čtyřznakový kód.'; return; }
+  if(!handed.length){ msg.textContent='Nemáte zatím žádnou rozdanou kartu — kód nemá k čemu patřit.'; return; }
   for(const h of handed){
     for(const act of ['fb','biz']){
-     for(let n=1;n<=3;n++){
-      const want=(await mcSign(h.code+'|'+act+'|'+n)).slice(0,4);
+     for(let n=0;n<=3;n++){
+      /* n = 0 je starší formát bez pořadí, kvůli zpětné kompatibilitě */
+      const want=(await mcSign(n===0 ? (h.code+'|'+act) : (h.code+'|'+act+'|'+n))).slice(0,4);
       if(want===raw){
         if(myTix.some(t=>t.code===h.code && t.act===act && t.n===n)){
           msg.textContent='Tenhle kód už jste uplatnil.'; return;
@@ -499,7 +501,8 @@ async function redeemConf(){
      }
     }
   }
-  msg.textContent='Kód nesedí k žádné z vašich rozdaných karet.';
+  msg.innerHTML='Kód nesedí k žádné z vašich '+handed.length+' rozdaných karet. '+
+    '<span style="color:var(--ink-3)">Zkontrolujte, že kartu vygeneroval tenhle terminál a že máte v prohlížeči novou verzi.</span>';
 }
 
 let handed=[];
