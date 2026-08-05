@@ -179,7 +179,7 @@ const fmt=n=>Number(n).toLocaleString('cs-CZ');
 const OKRUHY={wellness:'Lázně a wellness',gastro:'Stravování',charita:'Charitativní pomoc'};
 
 /* ---- podpis: HMAC-SHA256 tam, kde jde; jinak záložní kontrolní součet ---- */
-const MAX_CONF=3;                    // nejvýš tři kódy na jednu kartu
+const MAX_CONF=99;                   // TESTOVACÍ REŽIM — v ostrém provozu snížit na 3
 function confSeqKey(cardCode){ return 'mc_seq_'+cardCode; }
 function nextSeq(cardCode){
   let n=0; try{ n=Number(localStorage.getItem(confSeqKey(cardCode))||0); }catch(e){}
@@ -255,7 +255,7 @@ async function render(){
     return;
   }
 
-  const url=location.origin+location.pathname+'?v7#'+encodeURIComponent(raw.slice(raw.indexOf('MC1~')));
+  const url=location.origin+location.pathname+'?v8#'+encodeURIComponent(raw.slice(raw.indexOf('MC1~')));
   window.__okruh=v.okruh; window.__demo=!!v.demo; window.__by=v.by||''; window.__code=v.code;
 
   wrap.innerHTML=
@@ -280,7 +280,7 @@ async function render(){
     '<button class="btn" id="rejBtn">Tady to nevzali — získat los</button>'+
     '<div class="two"><button class="btn" id="wantBtn">Chci to pro svůj podnik</button>'+
     '<button class="btn" id="noBtn">Zatím ne</button></div>'+
-    '<p class="foot">Ukázková karta · bez serveru · hodnota je v odkazu · karta v7</p>';
+    '<p class="foot">Ukázková karta · bez serveru · hodnota je v odkazu · karta v8</p>';
 
   new QRCode(document.getElementById('qr'),{text:url,width:210,height:210,
     colorDark:'#0A0912',colorLight:'#ffffff',correctLevel:QRCode.CorrectLevel.M});
