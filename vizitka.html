@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#08120F">
+<meta name="robots" content="noindex, nofollow">
+<title>Robert Melc — mooncher</title>
+<link rel="manifest" href="manifest-vizitka.json">
+<link rel="apple-touch-icon" href="icon-180.png">
+<link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Vizitka">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600..800&family=DM+Sans:wght@400;500;700&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --void:#08120F;--edge:rgba(255,255,255,.10);--edge-hot:rgba(255,255,255,.20);
+  --teal:#22C7B0;--teal-lit:#6FE9DA;
+  --ink:#EAF6F2;--ink2:#8FA9A4;--ink3:#5B7671;
+  --mono:'JetBrains Mono',ui-monospace,monospace;--disp:'Bricolage Grotesque',system-ui,sans-serif;--body:'DM Sans',system-ui,sans-serif;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;min-height:100%}
+body{background:
+    radial-gradient(120% 55% at 78% 4%, rgba(34,199,176,.30), transparent 58%),
+    linear-gradient(180deg,#0B1A17,#04100D 70%);
+  color:var(--ink);font-family:var(--body);display:flex;justify-content:center;align-items:flex-start;
+  padding:env(safe-area-inset-top) 0 env(safe-area-inset-bottom)}
+.stage{width:100%;max-width:430px;padding:16px 14px 26px}
+
+.card{position:relative;border-radius:26px;overflow:hidden;padding:24px 22px 22px 58px;
+  background:linear-gradient(165deg,#123029 0%,#0C201B 55%,#061311 100%);
+  border:1px solid var(--edge);
+  box-shadow:0 28px 60px rgba(0,0,0,.55), 0 0 0 1px rgba(255,255,255,.03) inset}
+.card::before{content:'';position:absolute;width:280px;height:280px;border-radius:50%;
+  right:-110px;top:-130px;background:radial-gradient(circle,rgba(34,199,176,.42),transparent 70%);pointer-events:none}
+.card::after{content:'';position:absolute;inset:0;pointer-events:none;
+  background:linear-gradient(180deg,rgba(255,255,255,.07),transparent 32%)}
+
+.perf{position:absolute;left:38px;top:26px;bottom:26px;width:2px;
+  background:repeating-linear-gradient(to bottom,rgba(255,255,255,.30) 0 9px,transparent 9px 21px)}
+.notch{position:absolute;left:38px;width:44px;height:44px;border-radius:50%;background:var(--void);
+  transform:translate(-50%,-50%)}
+.notch.t{top:0} .notch.b{top:100%}
+.vert{position:absolute;left:4px;top:50%;transform:translateY(-50%) rotate(180deg);writing-mode:vertical-rl;
+  font-family:var(--disp);font-weight:500;font-size:12px;letter-spacing:.34em;color:var(--ink3);
+  text-transform:uppercase;white-space:nowrap}
+.vert b{color:var(--teal-lit);font-weight:500}
+
+.top{display:flex;align-items:flex-start;justify-content:space-between;gap:14px;position:relative;z-index:1}
+.eyebrow{font-family:var(--disp);font-weight:500;font-size:12px;letter-spacing:.3em;color:var(--teal-lit);text-transform:uppercase}
+h1{font-family:var(--disp);font-size:clamp(30px,8.6vw,38px);font-weight:800;letter-spacing:-.03em;margin:7px 0 0;line-height:1.02}
+.role{font-size:14px;color:var(--ink2);margin-top:7px}
+.logo{width:52px;height:52px;border-radius:15px;flex:none;display:block;box-shadow:0 8px 20px rgba(0,0,0,.45)}
+
+.box{position:relative;z-index:1;margin-top:20px;border:1px solid var(--edge);border-radius:18px;
+  background:rgba(255,255,255,.05);padding:15px 16px}
+.box .lab{font-family:var(--disp);font-weight:500;font-size:11px;letter-spacing:.26em;color:var(--ink3);text-transform:uppercase}
+.box a{display:block;font-family:var(--mono);font-weight:700;font-size:15.5px;color:var(--ink);
+  text-decoration:none;padding:9px 0;border-bottom:1px solid rgba(255,255,255,.07)}
+.box a:last-child{border-bottom:0;padding-bottom:0}
+.box a:first-of-type{font-size:18px;padding-top:11px}
+
+.dash{position:relative;z-index:1;height:2px;margin:18px 0;
+  background:repeating-linear-gradient(to right,rgba(255,255,255,.28) 0 9px,transparent 9px 20px)}
+
+.pill{position:relative;z-index:1;display:flex;align-items:center;gap:11px;border:1px solid var(--edge);
+  border-radius:999px;background:rgba(255,255,255,.05);padding:13px 18px}
+.pill i{width:9px;height:9px;border-radius:50%;background:var(--teal);flex:none;box-shadow:0 0 10px rgba(34,199,176,.8)}
+.pill span{font-family:var(--disp);font-weight:500;font-size:13px;letter-spacing:.2em;color:var(--teal-lit);text-transform:uppercase}
+
+.qrrow{position:relative;z-index:1;display:flex;gap:16px;align-items:center;margin-top:18px}
+.qrtile{background:#fff;border-radius:16px;padding:10px;flex:none;line-height:0}
+.qrtile img,.qrtile canvas{display:block;border-radius:6px}
+.qrtxt .lab{font-family:var(--disp);font-weight:500;font-size:11.5px;letter-spacing:.24em;color:var(--teal-lit);text-transform:uppercase}
+.qrtxt p{margin:8px 0 0;font-size:13.5px;color:var(--ink2);line-height:1.5}
+
+.quote{position:relative;z-index:1;margin:20px 0 0;font-size:14.5px;color:var(--ink2);line-height:1.55}
+.foot{position:relative;z-index:1;margin-top:18px;padding-top:14px;border-top:1px solid var(--edge);
+  display:flex;align-items:center;justify-content:space-between;gap:10px}
+.foot .wm{display:flex;align-items:center;gap:9px}
+.foot .wm img{width:22px;height:22px;border-radius:7px;display:block}
+.foot .wm b{font-family:var(--disp);font-weight:800;font-size:15px;letter-spacing:-.02em}
+.foot small{font-family:var(--mono);font-size:9.5px;color:var(--ink3);text-align:right;line-height:1.4}
+
+.acts{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-top:14px}
+.acts button{border:1px solid var(--edge-hot);background:rgba(255,255,255,.06);color:var(--ink);
+  border-radius:14px;padding:15px 10px;font-size:14px;font-weight:700;cursor:pointer;font-family:var(--body)}
+.acts button.pri{background:var(--teal);color:#04231E;border-color:transparent}
+.acts button:focus-visible{outline:2px solid var(--teal-lit);outline-offset:2px}
+.hint{text-align:center;font-family:var(--mono);font-size:10px;color:var(--ink3);margin:14px 0 0;line-height:1.8}
+</style>
+</head>
+<body>
+<div class="stage">
+
+  <div class="card">
+    <div class="perf"></div>
+    <div class="notch t"></div>
+    <div class="notch b"></div>
+    <div class="vert">Digitální&nbsp;<b>vizitka</b></div>
+
+    <div class="top">
+      <div>
+        <div class="eyebrow">mooncher</div>
+        <h1>Robert Melc</h1>
+        <div class="role">zakladatel · voucherová síť</div>
+      </div>
+      <img class="logo" src="icon-192.png" alt="Mooncher">
+    </div>
+
+    <div class="box">
+      <div class="lab">Kontakt</div>
+      <a href="tel:+420704132874">+420 704 132 874</a>
+      <a href="mailto:hello@mooncher.com">hello@mooncher.com</a>
+      <a href="https://www.mooncher.com" target="_blank" rel="noopener">www.mooncher.com</a>
+    </div>
+
+    <div class="dash"></div>
+
+    <div class="pill"><i></i><span>Fly me to the moon</span></div>
+
+    <div class="qrrow">
+      <div class="qrtile"><div id="qr"></div></div>
+      <div class="qrtxt">
+        <div class="lab">Zkuste to sám</div>
+        <p>Naskenujte a za dvě minuty uvidíte, jak voucher funguje.</p>
+      </div>
+    </div>
+
+    <p class="quote">„Voucher, který jde uplatnit i jinde, než kde ho vydali.“</p>
+
+    <div class="foot">
+      <div class="wm"><img src="icon-192.png" alt=""><b>mooncher</b></div>
+      <small>ROOMS MANAGEMENT s.r.o.</small>
+    </div>
+  </div>
+
+  <div class="acts">
+    <button class="pri" id="save">Uložit kontakt</button>
+    <button id="share">Sdílet vizitku</button>
+  </div>
+  <p class="hint">Přidejte si na plochu — bude po ruce jako aplikace</p>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script>
+const LINK='https://demo.mooncher.com/testeri.html';
+
+try{
+  new QRCode(document.getElementById('qr'),{text:LINK,width:118,height:118,
+    colorDark:'#08120F',colorLight:'#ffffff',correctLevel:QRCode.CorrectLevel.M});
+}catch(e){ document.getElementById('qr').textContent='QR'; }
+
+const VCARD=[
+'BEGIN:VCARD','VERSION:3.0',
+'N:Melc;Robert;;;','FN:Robert Melc',
+'ORG:ROOMS MANAGEMENT s.r.o.;mooncher',
+'TITLE:zakladatel',
+'TEL;TYPE=CELL:+420704132874',
+'EMAIL;TYPE=INTERNET:hello@mooncher.com',
+'URL:https://www.mooncher.com',
+'NOTE:Voucher, ktery jde uplatnit i jinde, nez kde ho vydali. Ukazka: '+LINK,
+'END:VCARD'].join('\r\n');
+
+document.getElementById('save').onclick=()=>{
+  const b=new Blob([VCARD],{type:'text/vcard;charset=utf-8'});
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(b); a.download='robert-melc.vcf';
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(()=>URL.revokeObjectURL(a.href),4000);
+};
+
+document.getElementById('share').onclick=async()=>{
+  const data={title:'Robert Melc — mooncher',
+    text:'Voucher, který jde uplatnit i jinde, než kde ho vydali.',
+    url:location.origin+location.pathname};
+  try{ if(navigator.share){ await navigator.share(data); return; } }catch(e){ return; }
+  try{ await navigator.clipboard.writeText(data.url);
+    document.getElementById('share').textContent='Odkaz zkopírován'; }
+  catch(e){ document.getElementById('share').textContent=data.url; }
+};
+
+if('serviceWorker' in navigator){
+  window.addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}));
+}
+</script>
+</body>
+</html>
