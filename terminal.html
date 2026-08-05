@@ -219,6 +219,17 @@ button:focus-visible,input:focus-visible,summary:focus-visible{outline:2px solid
       <p>„Kdyby tohle mohli lidi uplatnit u vás, chtěl byste to?“</p>
       <div class="them"><i>on má na kartě</i>tlačítko Chci to pro svůj podnik</div></div>
     <div class="demoLine">Fly Me to the Moon</div>
+    <div class="step" style="border-color:rgba(240,180,41,.35);background:rgba(240,180,41,.07)">
+      <div class="n" style="color:var(--warn)">Vaše losy</div>
+      <b id="myTixCnt">0</b>
+      <p>Los dostanete, až něco udělá ten druhý — zapíše místo, kde kartu nevzali, nebo projeví zájem o vlastní podnik. Řekne vám čtyřznakový kód, který se objeví na jeho kartě.</p>
+      <div style="display:flex;gap:8px;margin-top:10px">
+        <input class="whoInput" id="confIn" placeholder="Kód od něj" maxlength="4"
+          style="text-transform:uppercase;font-family:var(--mono);letter-spacing:.2em">
+        <button class="tool" id="confBtn" style="padding:0 16px">Uplatnit</button>
+      </div>
+      <div id="confMsg" style="margin-top:8px;font-size:12px;color:var(--ink-2)"></div>
+    </div>
     <input class="whoInput" id="demoWho" placeholder="Komu ukazuji — jméno nebo podnik (nepovinné)" autocomplete="off">
     <button class="go" id="demoNew" style="background:var(--key);color:var(--ink)">Nová ukázková karta</button>
   </div>
@@ -458,6 +469,36 @@ function setMode(m){
 $('tabAcc').onclick=()=>setMode('accept');
 $('tabIss').onclick=()=>setMode('issue');
 $('tabDemo').onclick=()=>setMode('demo');
+
+let myTix=[];
+try{ myTix=JSON.parse(localStorage.getItem('mc_mytix')||'[]'); }catch(e){ myTix=[]; }
+function myStore(){ try{ localStorage.setItem('mc_mytix',JSON.stringify(myTix)); }catch(e){} }
+function paintMyTix(){ const el=$('myTixCnt'); if(el) el.textContent=myTix.length; }
+
+async function redeemConf(){
+  const raw=($('confIn').value||'').trim().toUpperCase();
+  const msg=$('confMsg');
+  if(raw.length<4){ msg.textContent='Zadejte celý čtyřznakový kód.'; return; }
+  for(const h of handed){
+    for(const act of ['fb','biz']){
+      const want=(await mcSign(h.code+'|'+act)).slice(0,4);
+      if(want===raw){
+        if(myTix.some(t=>t.code===h.code && t.act===act)){
+          msg.textContent='Tenhle kód už jste uplatnil.'; return;
+        }
+        myTix.unshift({code:h.code,act,who:h.who||'',at:new Date().toISOString()});
+        myStore(); paintMyTix();
+        msg.innerHTML='<span style="color:var(--ok);font-weight:700">Los je váš.</span> '+
+          (act==='fb'?'Zapsal místo, kde kartu nevzali.':'Projevil zájem o vlastní podnik.')+
+          (h.who?' — '+h.who:'');
+        $('confIn').value='';
+        beep(true);
+        return;
+      }
+    }
+  }
+  msg.textContent='Kód nesedí k žádné z vašich rozdaných karet.';
+}
 
 let handed=[];
 function hStore(){ try{ localStorage.setItem('mc_handed',JSON.stringify(handed)); }catch(e){} }
@@ -1023,7 +1064,9 @@ function beep(ok){
   if(navigator.vibrate) navigator.vibrate(ok?30:[25,45,25]);
 }
 
-paintAmount(); paintHanded();
+paintAmount(); paintHanded(); paintMyTix();
+$('confBtn').onclick=redeemConf;
+$('confIn').addEventListener('keydown',e=>{ if(e.key==='Enter') redeemConf(); });
 </script>
 </body>
 </html>

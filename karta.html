@@ -42,6 +42,12 @@ body{background:radial-gradient(125% 55% at 50% -8%,rgba(157,92,246,.22),transpa
 
 .by{margin-top:12px;font-size:11.5px;color:var(--ink3);font-family:var(--mono);letter-spacing:.04em}
 .by b{color:var(--violet-lit);font-weight:700}
+.conf{border:1px solid rgba(157,92,246,.45);background:rgba(157,92,246,.12);border-radius:14px;
+  padding:15px;margin-top:14px;text-align:center}
+.conf b{display:block;font-family:var(--disp);font-size:14px;margin-bottom:8px}
+.conf .code{font-family:var(--mono);font-size:34px;font-weight:700;letter-spacing:.22em;color:var(--violet-lit);
+  line-height:1.1}
+.conf small{display:block;margin-top:8px;font-size:11.5px;color:var(--ink2);line-height:1.5}
 .demoflag{border:1px solid rgba(240,180,41,.4);background:rgba(240,180,41,.1);border-radius:11px;
   padding:9px 12px;font-size:11.5px;color:var(--warn);text-align:center;font-weight:700}
 .qrbox{background:#fff;border-radius:20px;padding:18px;display:grid;place-items:center;gap:12px}
@@ -128,6 +134,21 @@ const fmt=n=>Number(n).toLocaleString('cs-CZ');
 const OKRUHY={wellness:'Lázně a wellness',gastro:'Stravování',charita:'Charitativní pomoc'};
 
 /* ---- podpis: HMAC-SHA256 tam, kde jde; jinak záložní kontrolní součet ---- */
+async function actionCode(cardCode,action){
+  const sig=await sign(cardCode+'|'+action);
+  return sig.slice(0,4);
+}
+function showConf(code,what){
+  const old=document.getElementById('confBox'); if(old) old.remove();
+  const box=document.createElement('div');
+  box.className='conf'; box.id='confBox';
+  box.innerHTML='<b>Řekněte tenhle kód tomu, kdo vám kartu ukázal</b>'+
+    '<div class="code">'+code+'</div>'+
+    '<small>'+what+'<br>Díky němu dostane los i on. Bez toho se to k němu nedostane.</small>';
+  const anchor=document.getElementById('tix');
+  anchor.parentNode.insertBefore(box,anchor);
+}
+
 async function sign(payload){
   if(window.crypto && crypto.subtle){
     try{
@@ -177,7 +198,7 @@ async function render(){
   }
 
   const url=location.origin+location.pathname+'#'+encodeURIComponent(raw.slice(raw.indexOf('MC1~')));
-  window.__okruh=v.okruh; window.__demo=!!v.demo; window.__by=v.by||'';
+  window.__okruh=v.okruh; window.__demo=!!v.demo; window.__by=v.by||''; window.__code=v.code;
 
   wrap.innerHTML=
     '<div class="card">'+
@@ -235,6 +256,7 @@ async function render(){
     e.target.textContent='Ozveme se — díky!';
     e.target.classList.add('pri');
     e.target.disabled=true;
+    actionCode(v.code,'biz').then(c=>showConf(c,'Za zájem o vlastní podnik.'));
   };
 }
 /* ---------- losy za odmítnutí ---------- */
@@ -278,6 +300,7 @@ function saveReject(){
   tix.unshift({name,key,amt,at:new Date().toISOString(),demo:!!window.__demo,by:window.__by});
   store(tix); paintTix();
   document.getElementById('rejSheet').classList.remove('on');
+  actionCode(window.__code||'', 'fb').then(c=>showConf(c,'Za zapsané místo.'));
   const okr=(window.__okruh||'wellness');
   const list=KDE[okr]||[];
   const note=document.createElement('div');
