@@ -40,6 +40,10 @@ body{background:radial-gradient(125% 55% at 50% -8%,rgba(157,92,246,.22),transpa
 .meta span{display:block;font-family:var(--mono);font-size:8.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--ink3)}
 .meta b{display:block;font-family:var(--mono);font-size:12.5px;font-weight:700;margin-top:3px;word-break:break-all}
 
+.by{margin-top:12px;font-size:11.5px;color:var(--ink3);font-family:var(--mono);letter-spacing:.04em}
+.by b{color:var(--violet-lit);font-weight:700}
+.demoflag{border:1px solid rgba(240,180,41,.4);background:rgba(240,180,41,.1);border-radius:11px;
+  padding:9px 12px;font-size:11.5px;color:var(--warn);text-align:center;font-weight:700}
 .qrbox{background:#fff;border-radius:20px;padding:18px;display:grid;place-items:center;gap:12px}
 .qrbox #qr{display:grid;place-items:center}
 .qrbox p{margin:0;font-size:12.5px;color:#4A4459;text-align:center;line-height:1.5;font-weight:500}
@@ -141,15 +145,16 @@ async function sign(payload){
 const ABC='ACDEFGHJKLMNPQRTUVWXY34679';
 function toAbc(bytes,n){ let o=''; for(let i=0;i<n;i++) o+=ABC[bytes[i]%ABC.length]; return o; }
 
-/* payload: MC1~kód~zůstatek~platnost~okruh~vydavatel */
+/* payload: MC1~kód~zůstatek~platnost~okruh~vydavatel~předal */
 function parse(raw){
   const t=(raw||'').trim();
   const i=t.indexOf('MC1~');
   if(i<0) return null;
   const p=t.slice(i).split('~');
-  if(p.length<7) return null;
-  return {code:p[1],bal:Number(p[2]),exp:p[3],okruh:p[4],issuer:decodeURIComponent(p[5]),sig:p[6],
-          body:p.slice(0,6).join('~')};
+  if(p.length<8) return null;
+  return {code:p[1],bal:Number(p[2]),exp:p[3],okruh:p[4],issuer:decodeURIComponent(p[5]),
+          by:decodeURIComponent(p[6]),sig:p[7],body:p.slice(0,7).join('~'),
+          demo:/^DEMO-/i.test(p[1])};
 }
 
 function el(html){ const d=document.createElement('div'); d.innerHTML=html.trim(); return d.firstElementChild; }
@@ -172,7 +177,7 @@ async function render(){
   }
 
   const url=location.origin+location.pathname+'#'+encodeURIComponent(raw.slice(raw.indexOf('MC1~')));
-  window.__okruh=v.okruh;
+  window.__okruh=v.okruh; window.__demo=!!v.demo; window.__by=v.by||'';
 
   wrap.innerHTML=
     '<div class="card">'+
@@ -185,10 +190,12 @@ async function render(){
         '<div><span>Kód</span><b>'+v.code+'</b></div>'+
         '<div style="text-align:right"><span>Platnost do</span><b>'+v.exp+'</b></div>'+
       '</div>'+
+      (v.by?'<div class="by">Kartu vám předal <b>'+v.by+'</b></div>':'')+
     '</div>'+
     '<div class="qrbox"><div id="qr"></div><p>Ukažte tenhle kód obsluze.<br>Odečte z něj jen to, co utratíte.</p></div>'+
     '<div class="line">Fly Me to the Moon</div>'+
     '<p class="hint">Zůstatek se nespotřebuje najednou. Co nevyčerpáte, zůstává na kartě.</p>'+
+    (v.demo?'<div class="demoflag">Ukázková karta — losy se do slosování nezapočítávají</div>':'')+
     '<div class="tickets" id="tix"></div>'+
     '<button class="btn pri" id="zoomBtn">Zvětšit kód</button>'+
     '<button class="btn" id="rejBtn">Tady to nevzali — získat los</button>'+
@@ -249,7 +256,9 @@ function paintTix(){
   const box=document.getElementById('tix'); if(!box) return;
   const left=Math.max(0,CAP_MONTH-monthCount());
   box.innerHTML=
-    '<div class="top"><b>Losy do slosování</b><span class="cnt">'+tix.length+'</span></div>'+
+    '<div class="top"><b>Losy do slosování</b><span class="cnt">'+
+      tix.filter(t=>!t.demo).length+(window.__demo?' <span style="font-size:12px;color:var(--ink3)">+ '+
+      tix.filter(t=>t.demo).length+' ukázkových</span>':'')+'</span></div>'+
     '<p>Los dostanete i za místo, kde kartu nevzali. Jedno místo se počítá jednou, '+
     (left?('tento měsíc zbývá '+left+'.'):'tento měsíc už máte strop.')+'</p>'+
     (tix.length?'<ul>'+tix.slice(0,5).map(t=>'<li><span>'+t.name+'</span><span>'+
@@ -266,7 +275,7 @@ function saveReject(){
     setTimeout(()=>btn.textContent='Uložit a získat los',1800); return; }
   if(monthCount()>=CAP_MONTH){ btn.textContent='Tento měsíc už máte strop';
     setTimeout(()=>btn.textContent='Uložit a získat los',1800); return; }
-  tix.unshift({name,key,amt,at:new Date().toISOString()});
+  tix.unshift({name,key,amt,at:new Date().toISOString(),demo:!!window.__demo,by:window.__by});
   store(tix); paintTix();
   document.getElementById('rejSheet').classList.remove('on');
   const okr=(window.__okruh||'wellness');

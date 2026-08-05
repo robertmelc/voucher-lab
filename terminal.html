@@ -291,6 +291,7 @@ const TERMINAL={
   accepts:['wellness','gastro'],
   issues:['wellness'],        // do kterých okruhů smí provozovna vydávat
   prefix:'ROY',
+  agent:'PRZ-0042',           // kdo kartu předal — nese se v kódu kvůli řetězu
   floorLimit:500          // do této částky terminál rozhodne sám, když nejede spojení
 };
 
@@ -347,12 +348,13 @@ function mcParse(raw){
   const t=(raw||'').trim(); const i=t.indexOf('MC1~');
   if(i<0) return null;
   const p=decodeURIComponent(t.slice(i)).split('~');
-  if(p.length<7) return null;
-  return {code:p[1],bal:Number(p[2]),exp:p[3],okruh:p[4],issuer:decodeURIComponent(p[5]),sig:p[6],
-          body:p.slice(0,6).join('~')};
+  if(p.length<8) return null;
+  return {code:p[1],bal:Number(p[2]),exp:p[3],okruh:p[4],issuer:decodeURIComponent(p[5]),
+          by:decodeURIComponent(p[6]),sig:p[7],body:p.slice(0,7).join('~')};
 }
-async function mcBuild(code,bal,exp,okruh,issuer){
-  const body=['MC1',code,bal,exp,okruh,encodeURIComponent(issuer)].join('~');
+async function mcBuild(code,bal,exp,okruh,issuer,by){
+  const body=['MC1',code,bal,exp,okruh,encodeURIComponent(issuer),
+              encodeURIComponent(by||TERMINAL.agent)].join('~');
   return body+'~'+await mcSign(body);
 }
 function mcUrl(payload){
@@ -438,7 +440,7 @@ let demoSeq=900;
 async function newDemoCard(){
   const exp=new Date(); exp.setMonth(exp.getMonth()+12);
   const code='DEMO-'+(demoSeq++);
-  const payload=await mcBuild(code,500,exp.toISOString().slice(0,10),'wellness','Ukázka Mooncher');
+  const payload=await mcBuild(code,500,exp.toISOString().slice(0,10),'wellness','Ukázka Mooncher',TERMINAL.agent);
   const box=$('demoQR'); box.innerHTML='';
   try{ new QRCode(box,{text:mcUrl(payload),width:230,height:230,
     colorDark:'#0A0912',colorLight:'#ffffff',correctLevel:QRCode.CorrectLevel.M}); }
@@ -619,7 +621,7 @@ function render(r){
 async function capture(amt,r){
   if(r.stateless){
     const v=r.stateless, rest=v.bal-amt;
-    const payload=await mcBuild(v.code,rest,v.exp,v.okruh,v.issuer);
+    const payload=await mcBuild(v.code,rest,v.exp,v.okruh,v.issuer,v.by);
     journal.unshift({id:seq++,code:v.code,amt,queued:false,void:false,dir:'in',
       at:new Date(),issuer:v.issuer,auth:r.auth});
     paintJournal(); amount=0; paintAmount();
