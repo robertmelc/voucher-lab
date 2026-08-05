@@ -38,7 +38,7 @@ body{background:radial-gradient(130% 55% at 50% -8%,rgba(157,92,246,.18),transpa
   padding:6px 9px;font-family:var(--mono);font-size:9px;letter-spacing:.1em;text-transform:uppercase;cursor:pointer}
 .link.off{background:rgba(240,180,41,.12);color:var(--warn);border-color:rgba(240,180,41,.35)}
 
-.tabs{display:grid;grid-template-columns:1fr 1fr;gap:6px;background:var(--panel);border:1px solid var(--edge);
+.tabs{display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;background:var(--panel);border:1px solid var(--edge);
   border-radius:14px;padding:5px}
 .tabs button{border:0;background:none;color:var(--ink-3);border-radius:10px;padding:11px 0;cursor:pointer;
   font-family:var(--body);font-size:13px;font-weight:700}
@@ -77,6 +77,22 @@ body{background:radial-gradient(130% 55% at 50% -8%,rgba(157,92,246,.18),transpa
 .go{border:0;border-radius:15px;padding:17px;font-size:15px;font-weight:800;font-family:var(--body);
   background:var(--ok);color:#052718;cursor:pointer;width:100%}
 .go:disabled{background:var(--key);color:var(--ink-3);cursor:not-allowed}
+
+/* ---- režim ukázky ---- */
+#demoPane{display:none;flex-direction:column;gap:14px}
+#demoPane.on{display:flex}
+.demoQR{background:#fff;border-radius:22px;padding:20px;display:grid;place-items:center;gap:12px}
+.demoQR p{margin:0;font-size:13px;color:#4A4459;text-align:center;line-height:1.5;font-weight:600}
+.step{border:1px solid var(--edge);border-radius:15px;background:linear-gradient(180deg,var(--panel2),var(--panel));
+  padding:14px 16px}
+.step .n{font-family:var(--mono);font-size:9px;letter-spacing:.16em;text-transform:uppercase;color:var(--violet-lit)}
+.step b{display:block;font-family:var(--disp);font-size:16px;margin:5px 0 4px}
+.step p{margin:0;font-size:12.5px;color:var(--ink-2);line-height:1.55}
+.step .them{margin-top:9px;padding-top:9px;border-top:1px dashed var(--edge);
+  font-size:12px;color:var(--ok);line-height:1.5}
+.step .them i{font-style:normal;font-family:var(--mono);font-size:9px;letter-spacing:.12em;
+  text-transform:uppercase;color:var(--ink-3);display:block;margin-bottom:3px}
+.demoLine{font-family:var(--disp);font-size:15px;font-weight:700;text-align:center;color:var(--violet-lit)}
 
 /* ---- překryv skenování ---- */
 .sheet{position:fixed;inset:0;z-index:50;background:rgba(6,5,12,.94);backdrop-filter:blur(6px);
@@ -176,8 +192,24 @@ button:focus-visible,input:focus-visible,summary:focus-visible{outline:2px solid
   <div class="tabs">
     <button id="tabAcc" class="on">Přijmout voucher</button>
     <button id="tabIss">Vydat voucher</button>
+    <button id="tabDemo">Ukázka</button>
   </div>
   <div class="scopes" id="scopes"></div>
+
+  <div id="demoPane">
+    <div class="demoQR"><div id="demoQR"></div><p id="demoCap">Ať to naskenuje fotoaparátem telefonu.<br>Nic si nemusí instalovat.</p></div>
+    <div class="step"><div class="n">Krok 1 · vy</div><b>Podržte displej</b>
+      <p>Nic nemačkejte. Kód je připravený.</p>
+      <div class="them"><i>on uvidí</i>kartu s hodnotou 500 Kč na svém telefonu</div></div>
+    <div class="step"><div class="n">Krok 2 · vy</div><b>Přepněte na Přijmout voucher</b>
+      <p>Zadejte 100 a načtěte kód z jeho displeje.</p>
+      <div class="them"><i>on uvidí</i>že mu zůstatek klesl na 400 Kč — a že zbytek zůstal jemu</div></div>
+    <div class="step"><div class="n">Krok 3 · vy</div><b>Zeptejte se</b>
+      <p>„Kdyby tohle mohli lidi uplatnit u vás, chtěl byste to?“</p>
+      <div class="them"><i>on má na kartě</i>tlačítko Chci to pro svůj podnik</div></div>
+    <div class="demoLine">Fly Me to the Moon</div>
+    <button class="go" id="demoNew" style="background:var(--key);color:var(--ink)">Nová ukázková karta</button>
+  </div>
 
   <div class="amount">
     <div class="lab">Částka k úhradě</div>
@@ -292,6 +324,41 @@ const REASONS={
   '62':'Voucher blokován vydavatelem','91':'Autorizační centrum nedostupné'
 };
 
+/* ================= BEZSERVEROVÝ VOUCHER ================= */
+/* Hodnotu si nese sám kód. Terminál ji ověří podpisem a vydá nový kód s novým zůstatkem. */
+const MCKEY='mooncher-demo-2026';
+const MCABC='ACDEFGHJKLMNPQRTUVWXY34679';
+function mcAbc(b,n){ let o=''; for(let i=0;i<n;i++) o+=MCABC[b[i]%MCABC.length]; return o; }
+async function mcSign(body){
+  if(window.crypto && crypto.subtle){
+    try{
+      const enc=new TextEncoder();
+      const k=await crypto.subtle.importKey('raw',enc.encode(MCKEY),{name:'HMAC',hash:'SHA-256'},false,['sign']);
+      const sig=await crypto.subtle.sign('HMAC',k,enc.encode(body));
+      return mcAbc(new Uint8Array(sig),6);
+    }catch(e){}
+  }
+  let h=5381; const s=MCKEY+'|'+body;
+  for(let i=0;i<s.length;i++) h=((h*33)^s.charCodeAt(i))>>>0;
+  const b=[]; for(let i=0;i<6;i++){ b.push((h>>>(i*5))&255); h=(h*2654435761)>>>0; }
+  return mcAbc(b,6);
+}
+function mcParse(raw){
+  const t=(raw||'').trim(); const i=t.indexOf('MC1~');
+  if(i<0) return null;
+  const p=decodeURIComponent(t.slice(i)).split('~');
+  if(p.length<7) return null;
+  return {code:p[1],bal:Number(p[2]),exp:p[3],okruh:p[4],issuer:decodeURIComponent(p[5]),sig:p[6],
+          body:p.slice(0,6).join('~')};
+}
+async function mcBuild(code,bal,exp,okruh,issuer){
+  const body=['MC1',code,bal,exp,okruh,encodeURIComponent(issuer)].join('~');
+  return body+'~'+await mcSign(body);
+}
+function mcUrl(payload){
+  return new URL('karta.html',location.href).href+'#'+encodeURIComponent(payload);
+}
+
 /* ================= STAV ================= */
 let amount=0, online=true, journal=[], pending=null, seq=1;
 let demand=[];   // zaznamenané pokusy, které neprošly — poptávka po rozšíření sítě
@@ -353,11 +420,31 @@ function setMode(m){
   mode=m;
   $('tabAcc').classList.toggle('on',m==='accept');
   $('tabIss').classList.toggle('on',m==='issue');
+  $('tabDemo').classList.toggle('on',m==='demo');
+  const demo = m==='demo';
+  $('demoPane').classList.toggle('on',demo);
+  document.querySelector('.amount').style.display = demo?'none':'';
+  $('pad').style.display = demo?'none':'';
+  $('go').style.display = demo?'none':'';
   clear();
   paintAmount();
+  if(demo && !$('demoQR').hasChildNodes()) newDemoCard();
 }
 $('tabAcc').onclick=()=>setMode('accept');
 $('tabIss').onclick=()=>setMode('issue');
+$('tabDemo').onclick=()=>setMode('demo');
+
+let demoSeq=900;
+async function newDemoCard(){
+  const exp=new Date(); exp.setMonth(exp.getMonth()+12);
+  const code='DEMO-'+(demoSeq++);
+  const payload=await mcBuild(code,500,exp.toISOString().slice(0,10),'wellness','Ukázka Mooncher');
+  const box=$('demoQR'); box.innerHTML='';
+  try{ new QRCode(box,{text:mcUrl(payload),width:230,height:230,
+    colorDark:'#0A0912',colorLight:'#ffffff',correctLevel:QRCode.CorrectLevel.M}); }
+  catch(e){ box.textContent=code; }
+}
+$('demoNew').onclick=newDemoCard;
 
 $('go').onclick=()=>{
   if(mode==='issue'){ openIssue(); return; }
@@ -441,9 +528,27 @@ function closeSheet(){ $('sheet').classList.remove('on'); stopCam(); }
 $('auth').onclick=()=>submit($('code').value);
 $('code').addEventListener('keydown',e=>{ if(e.key==='Enter') submit($('code').value); });
 
+function submitStateless(v){
+  const rc = v.bal<amount ? '51' : (new Date(v.exp)<new Date() ? '33'
+            : (!TERMINAL.accepts.includes(v.okruh) ? '57' : '00'));
+  const fake={issuer:v.issuer,okruh:v.okruh,balance:v.bal,expires:v.exp,status:'ok'};
+  const r = rc==='00'
+    ? {ok:true,rc:'00',code:v.code,v:fake,auth:authCode(),rest:v.bal-amount,amount,stateless:v}
+    : {ok:false,rc,code:v.code,v:fake,partial:v.bal,amount,stateless:v};
+  pending=r; render(r); beep(r.ok);
+}
+
 function submit(raw){
   if(!raw.trim()) return;
   closeSheet();
+  const mv=mcParse(raw);
+  if(mv){
+    mcSign(mv.body).then(sig=>{
+      if(sig!==mv.sig){ const r={ok:false,rc:'62',code:mv.code,amount}; pending=r; render(r); beep(false); return; }
+      submitStateless(mv);
+    });
+    return;
+  }
   const r=authorize(raw,amount);
   pending={...r,amount};
   render(r);
@@ -511,7 +616,16 @@ function render(r){
   };
 }
 
-function capture(amt,r){
+async function capture(amt,r){
+  if(r.stateless){
+    const v=r.stateless, rest=v.bal-amt;
+    const payload=await mcBuild(v.code,rest,v.exp,v.okruh,v.issuer);
+    journal.unshift({id:seq++,code:v.code,amt,queued:false,void:false,dir:'in',
+      at:new Date(),issuer:v.issuer,auth:r.auth});
+    paintJournal(); amount=0; paintAmount();
+    showNewCode(payload,rest,v,amt);
+    return;
+  }
   if(r.v && !r.queued) r.v.balance-=amt;
   const rest = r.v ? r.v.balance : null;
   const rec = {code:r.code, amt, rest, auth:r.auth||'—', queued:!!r.queued,
@@ -600,6 +714,22 @@ async function drawReceipt(rec){
   return cv.toDataURL('image/png');
 }
 function clear(){ $('result').innerHTML=''; amount=0; paintAmount(); }
+
+function showNewCode(payload,rest,v,amt){
+  $('result').innerHTML=
+    '<div class="slip" data-r="ok"><div class="head"><div class="glyph">✓</div>'+
+    '<div><b>Odečteno '+fmt(amt)+' Kč</b><span>nový kód pro držitele</span></div></div>'+
+    '<div class="body"><div class="qrwrap"><div id="newqr"></div></div>'+
+    '<div class="kv"><span>Zbývá na kartě</span><b>'+fmt(rest)+' Kč</b></div>'+
+    '<div class="kv"><span>Kód voucheru</span><b>'+v.code+'</b></div>'+
+    '<p class="note">Ať si držitel naskenuje tenhle kód — karta se mu přepíše na nový zůstatek. '+
+    'Bez serveru si hodnotu nese sám kód, proto se musí kód po každém čerpání vyměnit.</p>'+
+    '<div style="margin-top:12px"><button class="btn pri full" id="newDone">Hotovo</button></div></div></div>';
+  try{ new QRCode($('newqr'),{text:mcUrl(payload),width:190,height:190,
+    colorDark:'#111111',colorLight:'#ffffff',correctLevel:QRCode.CorrectLevel.M}); }
+  catch(e){ $('newqr').textContent=v.code; }
+  $('newDone').onclick=clear;
+}
 
 /* ================= DENÍK ================= */
 function paintJournal(){

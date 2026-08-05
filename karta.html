@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#0A0912">
+<meta name="robots" content="noindex, nofollow">
+<title>Vaše karta</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600..800&family=DM+Sans:wght@400;500;700&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --void:#0A0912;--panel:#16132A;--panel2:#1F1A38;--edge:rgba(255,255,255,.09);--edge-hot:rgba(255,255,255,.18);
+  --violet:#9D5CF6;--violet-lit:#C084FC;--ok:#46E39A;--warn:#F0B429;--bad:#E5786B;
+  --ink:#F2EEFA;--ink2:#9A8CBB;--ink3:#5F5382;
+  --mono:'JetBrains Mono',ui-monospace,monospace;--disp:'Bricolage Grotesque',system-ui,sans-serif;--body:'DM Sans',system-ui,sans-serif;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;min-height:100%}
+body{background:radial-gradient(125% 55% at 50% -8%,rgba(157,92,246,.22),transparent 60%),var(--void);
+  color:var(--ink);font-family:var(--body);display:flex;justify-content:center;
+  padding:env(safe-area-inset-top) 0 env(safe-area-inset-bottom)}
+.wrap{width:100%;max-width:430px;padding:20px 18px 34px;display:flex;flex-direction:column;gap:16px}
+
+.card{border-radius:22px;padding:22px;position:relative;overflow:hidden;
+  background:linear-gradient(150deg,#2A2150,#171331 60%,#100D22);
+  border:1px solid var(--edge-hot);box-shadow:0 22px 50px rgba(0,0,0,.45)}
+.card::before{content:'';position:absolute;width:220px;height:220px;border-radius:50%;
+  right:-70px;top:-90px;background:radial-gradient(circle,rgba(192,132,252,.35),transparent 70%)}
+.eyebrow{font-family:var(--mono);font-size:9.5px;letter-spacing:.2em;text-transform:uppercase;color:var(--violet-lit)}
+.issuer{font-family:var(--disp);font-size:23px;font-weight:800;letter-spacing:-.02em;margin:6px 0 2px}
+.okruh{font-size:12.5px;color:var(--ink2)}
+.bal{font-family:var(--disp);font-size:clamp(42px,13vw,54px);font-weight:800;letter-spacing:-.03em;
+  color:var(--ok);line-height:1.05;margin:16px 0 2px}
+.balnote{font-family:var(--mono);font-size:10px;color:var(--ink3);letter-spacing:.1em;text-transform:uppercase}
+.meta{display:flex;justify-content:space-between;gap:12px;margin-top:18px;padding-top:14px;
+  border-top:1px dashed rgba(255,255,255,.14)}
+.meta div{min-width:0}
+.meta span{display:block;font-family:var(--mono);font-size:8.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--ink3)}
+.meta b{display:block;font-family:var(--mono);font-size:12.5px;font-weight:700;margin-top:3px;word-break:break-all}
+
+.qrbox{background:#fff;border-radius:20px;padding:18px;display:grid;place-items:center;gap:12px}
+.qrbox #qr{display:grid;place-items:center}
+.qrbox p{margin:0;font-size:12.5px;color:#4A4459;text-align:center;line-height:1.5;font-weight:500}
+
+.line{font-family:var(--disp);font-size:15px;font-weight:700;text-align:center;color:var(--violet-lit);
+  letter-spacing:-.01em;opacity:.9}
+.hint{font-size:13px;color:var(--ink2);line-height:1.6;text-align:center;margin:0}
+
+.btn{display:block;width:100%;text-align:center;border:1px solid var(--edge-hot);background:rgba(255,255,255,.05);
+  color:var(--ink);border-radius:14px;padding:15px;font-size:14px;font-weight:700;cursor:pointer;
+  font-family:var(--body);text-decoration:none}
+.btn.pri{background:var(--ok);color:#052718;border-color:transparent}
+.btn:focus-visible{outline:2px solid var(--violet-lit);outline-offset:2px}
+
+.bad{border:1px solid rgba(229,120,107,.4);background:rgba(229,120,107,.09);border-radius:16px;padding:18px}
+.bad b{font-family:var(--disp);font-size:17px;display:block;margin-bottom:5px;color:var(--bad)}
+.bad p{margin:0;font-size:13px;color:var(--ink2);line-height:1.6}
+.foot{font-family:var(--mono);font-size:9.5px;color:var(--ink3);text-align:center;line-height:1.8}
+
+dialog{border:0;background:none;padding:0;max-width:92vw}
+dialog::backdrop{background:rgba(5,4,10,.92)}
+.big{background:#fff;border-radius:24px;padding:22px;display:grid;place-items:center;gap:14px}
+.big p{margin:0;font-family:var(--mono);font-size:13px;color:#14121C;letter-spacing:.04em}
+</style>
+</head>
+<body>
+<div class="wrap" id="wrap">
+  <p class="hint">Načítám kartu…</p>
+</div>
+
+<dialog id="zoom"><div class="big"><div id="qrbig"></div><p id="bigcode"></p></div></dialog>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script>
+const KEY='mooncher-demo-2026';
+const fmt=n=>Number(n).toLocaleString('cs-CZ');
+const OKRUHY={wellness:'Lázně a wellness',gastro:'Stravování',charita:'Charitativní pomoc'};
+
+/* ---- podpis: HMAC-SHA256 tam, kde jde; jinak záložní kontrolní součet ---- */
+async function sign(payload){
+  if(window.crypto && crypto.subtle){
+    try{
+      const enc=new TextEncoder();
+      const k=await crypto.subtle.importKey('raw',enc.encode(KEY),{name:'HMAC',hash:'SHA-256'},false,['sign']);
+      const sig=await crypto.subtle.sign('HMAC',k,enc.encode(payload));
+      return toAbc(new Uint8Array(sig),6);
+    }catch(e){}
+  }
+  let h=5381; const s=KEY+'|'+payload;
+  for(let i=0;i<s.length;i++) h=((h*33)^s.charCodeAt(i))>>>0;
+  const b=[]; for(let i=0;i<6;i++){ b.push((h>>>(i*5))&255); h=(h*2654435761)>>>0; }
+  return toAbc(b,6);
+}
+const ABC='ACDEFGHJKLMNPQRTUVWXY34679';
+function toAbc(bytes,n){ let o=''; for(let i=0;i<n;i++) o+=ABC[bytes[i]%ABC.length]; return o; }
+
+/* payload: MC1~kód~zůstatek~platnost~okruh~vydavatel */
+function parse(raw){
+  const t=(raw||'').trim();
+  const i=t.indexOf('MC1~');
+  if(i<0) return null;
+  const p=t.slice(i).split('~');
+  if(p.length<7) return null;
+  return {code:p[1],bal:Number(p[2]),exp:p[3],okruh:p[4],issuer:decodeURIComponent(p[5]),sig:p[6],
+          body:p.slice(0,6).join('~')};
+}
+
+function el(html){ const d=document.createElement('div'); d.innerHTML=html.trim(); return d.firstElementChild; }
+
+async function render(){
+  const raw=decodeURIComponent(location.hash.slice(1));
+  const wrap=document.getElementById('wrap');
+  const v=parse(raw);
+
+  if(!v){
+    wrap.innerHTML='<div class="bad"><b>Karta chybí</b><p>Tahle stránka se otevírá naskenováním QR kódu voucheru. '+
+      'Otevřená napřímo nemá co zobrazit.</p></div>';
+    return;
+  }
+  const want=await sign(v.body);
+  if(want!==v.sig){
+    wrap.innerHTML='<div class="bad"><b>Neplatný podpis</b><p>Kód nesouhlasí s kontrolním blokem. '+
+      'Buď se při přenosu poškodil, nebo nepochází z této sítě.</p></div>';
+    return;
+  }
+
+  const url=location.origin+location.pathname+'#'+encodeURIComponent(raw.slice(raw.indexOf('MC1~')));
+
+  wrap.innerHTML=
+    '<div class="card">'+
+      '<div class="eyebrow">Digitální voucher</div>'+
+      '<div class="issuer">'+v.issuer+'</div>'+
+      '<div class="okruh">'+(OKRUHY[v.okruh]||v.okruh)+'</div>'+
+      '<div class="bal">'+fmt(v.bal)+' Kč</div>'+
+      '<div class="balnote">k dispozici</div>'+
+      '<div class="meta">'+
+        '<div><span>Kód</span><b>'+v.code+'</b></div>'+
+        '<div style="text-align:right"><span>Platnost do</span><b>'+v.exp+'</b></div>'+
+      '</div>'+
+    '</div>'+
+    '<div class="qrbox"><div id="qr"></div><p>Ukažte tenhle kód obsluze.<br>Odečte z něj jen to, co utratíte.</p></div>'+
+    '<div class="line">Fly Me to the Moon</div>'+
+    '<p class="hint">Zůstatek se nespotřebuje najednou. Co nevyčerpáte, zůstává na kartě.</p>'+
+    '<button class="btn pri" id="zoomBtn">Zvětšit kód</button>'+
+    '<button class="btn" id="wantBtn">Chci to pro svůj podnik</button>'+
+    '<p class="foot">Ukázková karta · bez serveru · hodnota je v odkazu</p>';
+
+  new QRCode(document.getElementById('qr'),{text:url,width:210,height:210,
+    colorDark:'#0A0912',colorLight:'#ffffff',correctLevel:QRCode.CorrectLevel.M});
+
+  document.getElementById('zoomBtn').onclick=()=>{
+    const box=document.getElementById('qrbig');
+    if(!box.hasChildNodes()){
+      new QRCode(box,{text:url,width:280,height:280,colorDark:'#0A0912',colorLight:'#ffffff',
+        correctLevel:QRCode.CorrectLevel.M});
+      document.getElementById('bigcode').textContent=v.code;
+    }
+    document.getElementById('zoom').showModal();
+  };
+  document.getElementById('zoom').onclick=e=>{ if(e.target.id==='zoom') e.target.close(); };
+
+  document.getElementById('wantBtn').onclick=e=>{
+    e.target.textContent='Ozveme se — díky!';
+    e.target.classList.add('pri');
+    e.target.disabled=true;
+  };
+}
+render();
+</script>
+</body>
+</html>
