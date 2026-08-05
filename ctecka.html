@@ -34,6 +34,12 @@ body{
 /* ---- hlavička ---- */
 .top{display:flex;align-items:center;justify-content:space-between;gap:12px}
 .brand{display:flex;align-items:center;gap:10px;min-width:0}
+.mkimg{width:30px;height:30px;border-radius:9px;flex:none;display:block;
+  box-shadow:0 4px 14px rgba(0,0,0,.35)}
+.wordmark{display:flex;align-items:center;gap:9px;justify-content:center;margin-top:4px}
+.wordmark img{width:20px;height:20px;border-radius:6px;display:block}
+.wordmark span{font-family:'Bricolage Grotesque',system-ui,sans-serif;font-weight:800;font-size:14px;
+  letter-spacing:-.02em;color:#8FA9A4}
 .mark{width:30px;height:30px;border-radius:9px;flex:none;display:grid;place-items:center;
   background:linear-gradient(140deg,var(--violet),#0B5F55);
   box-shadow:0 0 0 1px rgba(255,255,255,.12) inset, 0 8px 22px rgba(34,199,176,.35);
@@ -147,7 +153,7 @@ body{
 
   <div class="top">
     <div class="brand">
-      <div class="mark">B</div>
+      <img class="mkimg" src="icon-192.png" alt="Mooncher">
       <div>
         <b>Čtečka</b>
         <small>bakaláři.app</small>
@@ -188,6 +194,7 @@ body{
     <div id="rows"><p class="empty">Načtené kódy se ukládají sem, dokud máte stránku otevřenou. Nikam se neodesílají.</p></div>
   </div>
 
+  <div class="wordmark"><img src="icon-192.png" alt=""><span>mooncher</span></div>
   <p class="foot">Čte offline · nic neodesílá · <span id="engine">—</span></p>
 </div>
 

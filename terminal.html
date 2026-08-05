@@ -29,6 +29,12 @@ body{background:radial-gradient(130% 55% at 50% -8%,rgba(34,199,176,.18),transpa
 /* ---- lišta provozovny ---- */
 .bar{display:flex;align-items:center;gap:10px;padding:11px 13px;border:1px solid var(--edge);
   border-radius:14px;background:linear-gradient(180deg,var(--panel2),var(--panel))}
+.mkimg{width:30px;height:30px;border-radius:9px;flex:none;display:block;
+  box-shadow:0 4px 14px rgba(0,0,0,.35)}
+.wordmark{display:flex;align-items:center;gap:9px;justify-content:center;margin-top:4px}
+.wordmark img{width:20px;height:20px;border-radius:6px;display:block}
+.wordmark span{font-family:'Bricolage Grotesque',system-ui,sans-serif;font-weight:800;font-size:14px;
+  letter-spacing:-.02em;color:#8FA9A4}
 .bar .mark{width:28px;height:28px;border-radius:8px;flex:none;display:grid;place-items:center;
   background:linear-gradient(140deg,var(--violet),#0B5F55);font-family:var(--disp);font-weight:800;font-size:13px}
 .bar .who{flex:1;min-width:0}
@@ -196,7 +202,7 @@ button:focus-visible,input:focus-visible,summary:focus-visible{outline:2px solid
 <div class="term">
 
   <div class="bar">
-    <div class="mark">R</div>
+    <img class="mkimg" src="icon-192.png" alt="Mooncher">
     <div class="who" id="whoBar" style="cursor:pointer"><b>Hotel Royal — recepce</b><span id="tid">TERM 0042 · MID 8801</span></div>
     <button class="link" id="link">● Online</button>
   </div>
@@ -283,7 +289,8 @@ button:focus-visible,input:focus-visible,summary:focus-visible{outline:2px solid
     <table id="helpTable"></table>
   </details>
 
-  <p class="foot">Demo terminál · autorizace běží lokálně<br>data jen v paměti prohlížeče · terminál v11</p>
+  <div class="wordmark"><img src="icon-192.png" alt=""><span>mooncher</span></div>
+  <p class="foot">Demo terminál · autorizace běží lokálně<br>data jen v paměti prohlížeče · terminál v12</p>
 </div>
 
 <div class="sheet" id="issueSheet">
@@ -402,7 +409,7 @@ async function mcBuild(code,bal,exp,okruh,issuer,by){
   return body+'~'+await mcSign(body);
 }
 function mcUrl(payload){
-  return new URL('karta.html?v11',location.href).href+'#'+encodeURIComponent(payload);
+  return new URL('karta.html?v12',location.href).href+'#'+encodeURIComponent(payload);
 }
 
 /* ================= STAV ================= */

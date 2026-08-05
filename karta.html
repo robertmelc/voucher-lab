@@ -30,6 +30,12 @@ body{background:radial-gradient(125% 55% at 50% -8%,rgba(34,199,176,.22),transpa
   padding:env(safe-area-inset-top) 0 env(safe-area-inset-bottom)}
 .wrap{width:100%;max-width:430px;padding:20px 18px 34px;display:flex;flex-direction:column;gap:16px}
 
+.mkimg{width:30px;height:30px;border-radius:9px;flex:none;display:block;
+  box-shadow:0 4px 14px rgba(0,0,0,.35)}
+.wordmark{display:flex;align-items:center;gap:9px;justify-content:center;margin-top:4px}
+.wordmark img{width:20px;height:20px;border-radius:6px;display:block}
+.wordmark span{font-family:'Bricolage Grotesque',system-ui,sans-serif;font-weight:800;font-size:14px;
+  letter-spacing:-.02em;color:#8FA9A4}
 .card{border-radius:22px;padding:22px;position:relative;overflow:hidden;
   background:linear-gradient(150deg,#1C443B,#122722 60%,#0A1714);
   border:1px solid var(--edge-hot);box-shadow:0 22px 50px rgba(0,0,0,.45)}
@@ -262,11 +268,13 @@ async function render(){
     return;
   }
 
-  const url=location.origin+location.pathname+'?v11#'+encodeURIComponent(raw.slice(raw.indexOf('MC1~')));
+  const url=location.origin+location.pathname+'?v12#'+encodeURIComponent(raw.slice(raw.indexOf('MC1~')));
   window.__okruh=v.okruh; window.__demo=!!v.demo; window.__by=v.by||''; window.__code=v.code;
 
   wrap.innerHTML=
     '<div class="card">'+
+      '<img src="icon-192.png" alt="Mooncher" style="width:34px;height:34px;border-radius:10px;'+
+        'position:absolute;right:20px;top:20px;box-shadow:0 4px 14px rgba(0,0,0,.4)">'+
       '<div class="eyebrow">Digitální voucher</div>'+
       '<div class="issuer">'+v.issuer+'</div>'+
       '<div class="okruh">'+(OKRUHY[v.okruh]||v.okruh)+'</div>'+
@@ -287,7 +295,8 @@ async function render(){
     '<button class="btn" id="rejBtn">Tady to nevzali — získat los</button>'+
     '<div class="two"><button class="btn" id="wantBtn">Chci to pro svůj podnik</button>'+
     '<button class="btn" id="noBtn">Zatím ne</button></div>'+
-    '<p class="foot">Ukázková karta · bez serveru · hodnota je v odkazu · karta v11</p>';
+    '<div class="wordmark"><img src="icon-192.png" alt=""><span>mooncher</span></div>'+
+    '<p class="foot">Ukázková karta · bez serveru · hodnota je v odkazu · karta v12</p>';
 
   new QRCode(document.getElementById('qr'),{text:url,width:210,height:210,
     colorDark:'#08120F',colorLight:'#ffffff',correctLevel:QRCode.CorrectLevel.M});
