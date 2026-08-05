@@ -301,7 +301,7 @@ button:focus-visible,input:focus-visible,summary:focus-visible{outline:2px solid
   </details>
 
   <div class="wordmark"><img src="icon-192.png" alt=""><span>mooncher</span></div>
-  <p class="foot">Demo terminál · autorizace běží lokálně<br>data jen v paměti prohlížeče · terminál v16</p>
+  <p class="foot">Demo terminál · autorizace běží lokálně<br>data jen v paměti prohlížeče · terminál v17</p>
 </div>
 
 <div class="sheet" id="issueSheet">
@@ -392,20 +392,69 @@ const REASONS={
 const MCKEY='mooncher-demo-2026';
 const MCABC='ACDEFGHJKLMNPQRTUVWXY34679';
 function mcAbc(b,n){ let o=''; for(let i=0;i<n;i++) o+=MCABC[b[i]%MCABC.length]; return o; }
-async function mcSign(body){
-  if(window.crypto && crypto.subtle){
-    try{
-      const enc=new TextEncoder();
-      const k=await crypto.subtle.importKey('raw',enc.encode(MCKEY),{name:'HMAC',hash:'SHA-256'},false,['sign']);
-      const sig=await crypto.subtle.sign('HMAC',k,enc.encode(body));
-      return mcAbc(new Uint8Array(sig),6);
-    }catch(e){}
+/* SHA-256 + HMAC v čistém JavaScriptu — stejný výsledek v každém prohlížeči i kontextu */
+function _rr(x,n){return (x>>>n)|(x<<(32-n));}
+const _K=[1116352408,1899447441,3049323471,3921009573,961987163,1508970993,2453635748,2870763221,3624381080,310598401,607225278,1426881987,1925078388,2162078206,2614888103,3248222580,3835390401,4022224774,264347078,604807628,770255983,1249150122,1555081692,1996064986,2554220882,2821834349,2952996808,3210313671,3336571891,3584528711,113926993,338241895,666307205,773529912,1294757372,1396182291,1695183700,1986661051,2177026350,2456956037,2730485921,2820302411,3259730800,3345764771,3516065817,3600352804,4094571909,275423344,430227734,506948616,659060556,883997877,958139571,1322822218,1537002063,1747873779,1955562222,2024104815,2227730452,2361852424,2428436474,2756734187,3204031479,3329325298];
+function _sha256(bytes){
+  const l=bytes.length, bl=l*8;
+  const wl=(((l+8)>>6)+1)*16, m=new Int32Array(wl);
+  for(let i=0;i<l;i++) m[i>>2]|=bytes[i]<<(24-(i%4)*8);
+  m[l>>2]|=0x80<<(24-(l%4)*8);
+  m[wl-1]=bl;
+  const H=[1779033703,3144134277,1013904242,2773480762,1359893119,2600822924,528734635,1541459225];
+  const w=new Int32Array(64);
+  for(let i=0;i<m.length;i+=16){
+    let a=H[0],b=H[1],c=H[2],d=H[3],e=H[4],f=H[5],g=H[6],h=H[7];
+    for(let j=0;j<64;j++){
+      if(j<16) w[j]=m[i+j];
+      else{
+        const s0=_rr(w[j-15],7)^_rr(w[j-15],18)^(w[j-15]>>>3);
+        const s1=_rr(w[j-2],17)^_rr(w[j-2],19)^(w[j-2]>>>10);
+        w[j]=(w[j-16]+s0+w[j-7]+s1)|0;
+      }
+      const S1=_rr(e,6)^_rr(e,11)^_rr(e,25);
+      const ch=(e&f)^(~e&g);
+      const t1=(h+S1+ch+_K[j]+w[j])|0;
+      const S0=_rr(a,2)^_rr(a,13)^_rr(a,22);
+      const mj=(a&b)^(a&c)^(b&c);
+      const t2=(S0+mj)|0;
+      h=g;g=f;f=e;e=(d+t1)|0;d=c;c=b;b=a;a=(t1+t2)|0;
+    }
+    H[0]=(H[0]+a)|0;H[1]=(H[1]+b)|0;H[2]=(H[2]+c)|0;H[3]=(H[3]+d)|0;
+    H[4]=(H[4]+e)|0;H[5]=(H[5]+f)|0;H[6]=(H[6]+g)|0;H[7]=(H[7]+h)|0;
   }
-  let h=5381; const s=MCKEY+'|'+body;
-  for(let i=0;i<s.length;i++) h=((h*33)^s.charCodeAt(i))>>>0;
-  const b=[]; for(let i=0;i<6;i++){ b.push((h>>>(i*5))&255); h=(h*2654435761)>>>0; }
-  return mcAbc(b,6);
+  const out=new Uint8Array(32);
+  for(let i=0;i<8;i++){ out[i*4]=(H[i]>>>24)&255; out[i*4+1]=(H[i]>>>16)&255; out[i*4+2]=(H[i]>>>8)&255; out[i*4+3]=H[i]&255; }
+  return out;
 }
+function _utf8(s){
+  const o=[];
+  for(let i=0;i<s.length;i++){
+    let c=s.charCodeAt(i);
+    if(c<128) o.push(c);
+    else if(c<2048){ o.push(192|(c>>6),128|(c&63)); }
+    else if(c>=55296&&c<56320&&i+1<s.length){
+      const c2=s.charCodeAt(++i); const cp=65536+((c-55296)<<10)+(c2-56320);
+      o.push(240|(cp>>18),128|((cp>>12)&63),128|((cp>>6)&63),128|(cp&63));
+    } else { o.push(224|(c>>12),128|((c>>6)&63),128|(c&63)); }
+  }
+  return new Uint8Array(o);
+}
+function hmac256(key,msg){
+  let k=_utf8(key);
+  if(k.length>64) k=_sha256(k);
+  const pad=new Uint8Array(64); pad.set(k);
+  const ip=new Uint8Array(64), op=new Uint8Array(64);
+  for(let i=0;i<64;i++){ ip[i]=pad[i]^0x36; op[i]=pad[i]^0x5c; }
+  const m=_utf8(msg);
+  const in1=new Uint8Array(64+m.length); in1.set(ip); in1.set(m,64);
+  const h1=_sha256(in1);
+  const in2=new Uint8Array(96); in2.set(op); in2.set(h1,64);
+  return _sha256(in2);
+}
+
+async function mcSign(body){ return mcAbc(hmac256(MCKEY, body), 6); }
+
 function mcParse(raw){
   let t=(raw||'').trim();
   if(t.indexOf('MC1~')<0){ try{ const d=unb64u(t.split('#').pop()); if(d.indexOf('MC1~')===0) t=d; }catch(e){} }
@@ -437,7 +486,7 @@ function unb64u(s){
 }
 function mcUrl(payload){
   /* base64url — v adrese pak nejsou procenta, která některé prohlížeče samy rozkódují */
-  return new URL('karta.html?v16',location.href).href+'#'+b64u(payload);
+  return new URL('karta.html?v17',location.href).href+'#'+b64u(payload);
 }
 
 /* ================= STAV ================= */
