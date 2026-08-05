@@ -9,9 +9,9 @@
 <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600..800&family=DM+Sans:wght@400;500;700&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
 <style>
 :root{
-  --void:#0A0912; --panel:#16132A; --panel2:#1F1A38; --key:#241E42;
+  --void:#08120F; --panel:#0F211C; --panel2:#163029; --key:#1B3A32;
   --edge:rgba(255,255,255,.09); --edge-hot:rgba(255,255,255,.17);
-  --violet:#9D5CF6; --violet-lit:#C084FC;
+  --violet:#22C7B0; --violet-lit:#6FE9DA;
   --ok:#46E39A; --warn:#F0B429; --bad:#E5786B;
   --ink:#F2EEFA; --ink-2:#9A8CBB; --ink-3:#5F5382;
   --mono:'JetBrains Mono',ui-monospace,monospace;
@@ -19,7 +19,7 @@
   --body:'DM Sans',system-ui,sans-serif;
 }
 *{box-sizing:border-box}
-body{margin:0;background:radial-gradient(110% 45% at 50% -6%,rgba(157,92,246,.16),transparent 58%),var(--void);
+body{margin:0;background:radial-gradient(110% 45% at 50% -6%,rgba(34,199,176,.16),transparent 58%),var(--void);
   color:var(--ink);font-family:var(--body);min-height:100vh}
 .wrap{max-width:1080px;margin:0 auto;padding:28px 20px 60px;display:flex;flex-direction:column;gap:26px}
 
@@ -81,9 +81,9 @@ td.who span{font-family:var(--mono);font-size:10px;color:var(--ink-3)}
 .cellbtn{border:1px solid var(--edge);background:var(--void);border-radius:9px;padding:7px 10px;cursor:pointer;
   font-family:var(--mono);font-size:10px;letter-spacing:.06em;color:var(--ink-3);min-width:92px;text-align:center}
 .cellbtn[data-v="a"]{color:var(--ok);border-color:rgba(70,227,154,.35);background:rgba(70,227,154,.08)}
-.cellbtn[data-v="i"]{color:var(--violet-lit);border-color:rgba(157,92,246,.4);background:rgba(157,92,246,.1)}
+.cellbtn[data-v="i"]{color:var(--violet-lit);border-color:rgba(34,199,176,.4);background:rgba(34,199,176,.1)}
 .cellbtn[data-v="b"]{color:var(--ink);border-color:var(--edge-hot);
-  background:linear-gradient(135deg,rgba(157,92,246,.16),rgba(70,227,154,.12))}
+  background:linear-gradient(135deg,rgba(34,199,176,.16),rgba(70,227,154,.12))}
 .legend{display:flex;gap:14px;flex-wrap:wrap;font-family:var(--mono);font-size:10px;color:var(--ink-3);
   margin-top:10px;letter-spacing:.06em}
 .legend b{color:var(--ink-2);font-weight:400}
@@ -101,11 +101,11 @@ td.who span{font-family:var(--mono);font-size:10px;color:var(--ink-3)}
 .foot{font-family:var(--mono);font-size:10px;color:var(--ink-3);line-height:1.8;text-align:center;
   border-top:1px solid var(--edge);padding-top:18px}
 </style>
-<meta name="theme-color" content="#0A0912">
+<meta name="theme-color" content="#08120F">
 <meta name="robots" content="noindex, nofollow">
 <link rel="manifest" href="manifest-konzole.json">
-<link rel="apple-touch-icon" href="icon-konzole-180.png">
-<link rel="icon" type="image/png" sizes="192x192" href="icon-konzole-192.png">
+<link rel="apple-touch-icon" href="icon-180.png">
+<link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">

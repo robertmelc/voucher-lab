@@ -3,16 +3,16 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<meta name="theme-color" content="#0A0912">
+<meta name="theme-color" content="#08120F">
 <title>Voucherový terminál</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600..800&family=DM+Sans:wght@400;500;700&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
 <style>
 :root{
-  --void:#0A0912; --panel:#16132A; --panel2:#1F1A38; --key:#241E42;
+  --void:#08120F; --panel:#0F211C; --panel2:#163029; --key:#1B3A32;
   --edge:rgba(255,255,255,.09); --edge-hot:rgba(255,255,255,.17);
-  --violet:#9D5CF6; --violet-lit:#C084FC;
+  --violet:#22C7B0; --violet-lit:#6FE9DA;
   --ok:#46E39A; --warn:#F0B429; --bad:#E5786B;
   --ink:#F2EEFA; --ink-2:#9A8CBB; --ink-3:#5F5382;
   --mono:'JetBrains Mono',ui-monospace,monospace;
@@ -21,7 +21,7 @@
 }
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 html,body{margin:0;min-height:100%}
-body{background:radial-gradient(130% 55% at 50% -8%,rgba(157,92,246,.18),transparent 60%),var(--void);
+body{background:radial-gradient(130% 55% at 50% -8%,rgba(34,199,176,.18),transparent 60%),var(--void);
   color:var(--ink);font-family:var(--body);display:flex;justify-content:center;
   padding:env(safe-area-inset-top) 0 env(safe-area-inset-bottom)}
 .term{width:100%;max-width:430px;padding:16px 16px 28px;display:flex;flex-direction:column;gap:14px}
@@ -30,7 +30,7 @@ body{background:radial-gradient(130% 55% at 50% -8%,rgba(157,92,246,.18),transpa
 .bar{display:flex;align-items:center;gap:10px;padding:11px 13px;border:1px solid var(--edge);
   border-radius:14px;background:linear-gradient(180deg,var(--panel2),var(--panel))}
 .bar .mark{width:28px;height:28px;border-radius:8px;flex:none;display:grid;place-items:center;
-  background:linear-gradient(140deg,var(--violet),#5B21B6);font-family:var(--disp);font-weight:800;font-size:13px}
+  background:linear-gradient(140deg,var(--violet),#0B5F55);font-family:var(--disp);font-weight:800;font-size:13px}
 .bar .who{flex:1;min-width:0}
 .bar .who b{display:block;font-family:var(--disp);font-size:14px;line-height:1.1}
 .bar .who span{font-family:var(--mono);font-size:9px;letter-spacing:.1em;color:var(--ink-3);text-transform:uppercase}
@@ -46,7 +46,7 @@ body{background:radial-gradient(130% 55% at 50% -8%,rgba(157,92,246,.18),transpa
 .opts{display:grid;gap:7px;margin-bottom:12px}
 .opt{display:flex;align-items:center;gap:10px;border:1px solid var(--edge);background:var(--void);
   border-radius:12px;padding:11px 13px;cursor:pointer}
-.opt.on{border-color:var(--violet);background:rgba(157,92,246,.12)}
+.opt.on{border-color:var(--violet);background:rgba(34,199,176,.12)}
 .opt b{font-size:13px;flex:1}
 .opt small{font-family:var(--mono);font-size:10px;color:var(--ink-3)}
 .opt i{width:14px;height:14px;border-radius:50%;border:2px solid var(--ink-3);flex:none}
@@ -55,7 +55,7 @@ body{background:radial-gradient(130% 55% at 50% -8%,rgba(157,92,246,.18),transpa
 .qrwrap img,.qrwrap canvas{display:block}
 .scopes{display:flex;gap:6px;flex-wrap:wrap}
 .chip{font-family:var(--mono);font-size:9px;letter-spacing:.09em;text-transform:uppercase;
-  border:1px solid rgba(157,92,246,.35);background:rgba(157,92,246,.12);color:var(--violet-lit);
+  border:1px solid rgba(34,199,176,.35);background:rgba(34,199,176,.12);color:var(--violet-lit);
   border-radius:999px;padding:4px 9px}
 
 /* ---- částka ---- */
@@ -99,21 +99,21 @@ body{background:radial-gradient(130% 55% at 50% -8%,rgba(157,92,246,.18),transpa
 #handedBox .tx i{background:var(--violet)}
 #handedBox .tx.demo i{background:var(--ink-3)}
 dialog.qrd{border:0;background:none;padding:0;max-width:92vw}
-dialog.qrd::backdrop{background:rgba(5,4,10,.93)}
+dialog.qrd::backdrop{background:rgba(4,16,13,.93)}
 .qrd .inner{background:#fff;border-radius:24px;padding:22px;display:grid;place-items:center;gap:12px}
 .qrd .inner p{margin:0;font-family:var(--mono);font-size:13px;color:#14121C;letter-spacing:.05em;text-align:center}
 .qrd .inner small{font-family:var(--body);font-size:12px;color:#6B6580}
 .demoLine{font-family:var(--disp);font-size:15px;font-weight:700;text-align:center;color:var(--violet-lit)}
 
 /* ---- překryv skenování ---- */
-.sheet{position:fixed;inset:0;z-index:50;background:rgba(6,5,12,.94);backdrop-filter:blur(6px);
+.sheet{position:fixed;inset:0;z-index:50;background:rgba(5,17,14,.94);backdrop-filter:blur(6px);
   display:none;align-items:center;justify-content:center;padding:16px}
 .sheet.on{display:flex}
 .card{width:100%;max-width:400px;background:linear-gradient(180deg,var(--panel2),var(--panel));
   border:1px solid var(--edge-hot);border-radius:20px;padding:18px;max-height:92vh;overflow:auto}
 .card h3{font-family:var(--disp);font-size:17px;margin:0 0 4px}
 .card p.hint{font-size:12.5px;color:var(--ink-2);margin:0 0 14px;line-height:1.55}
-.cam{position:relative;aspect-ratio:1;border-radius:15px;overflow:hidden;background:#05040A;border:1px solid var(--edge)}
+.cam{position:relative;aspect-ratio:1;border-radius:15px;overflow:hidden;background:#04100D;border:1px solid var(--edge)}
 .cam video{width:100%;height:100%;object-fit:cover;display:block}
 .cam canvas{display:none}
 .ret{position:absolute;inset:15%;pointer-events:none}
@@ -185,8 +185,8 @@ button:focus-visible,input:focus-visible,summary:focus-visible{outline:2px solid
 </style>
 <meta name="robots" content="noindex, nofollow">
 <link rel="manifest" href="manifest-terminal.json">
-<link rel="apple-touch-icon" href="icon-terminal-180.png">
-<link rel="icon" type="image/png" sizes="192x192" href="icon-terminal-192.png">
+<link rel="apple-touch-icon" href="icon-180.png">
+<link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -283,7 +283,7 @@ button:focus-visible,input:focus-visible,summary:focus-visible{outline:2px solid
     <table id="helpTable"></table>
   </details>
 
-  <p class="foot">Demo terminál · autorizace běží lokálně<br>data jen v paměti prohlížeče · terminál v9</p>
+  <p class="foot">Demo terminál · autorizace běží lokálně<br>data jen v paměti prohlížeče · terminál v10</p>
 </div>
 
 <div class="sheet" id="issueSheet">
@@ -402,7 +402,7 @@ async function mcBuild(code,bal,exp,okruh,issuer,by){
   return body+'~'+await mcSign(body);
 }
 function mcUrl(payload){
-  return new URL('karta.html?v9',location.href).href+'#'+encodeURIComponent(payload);
+  return new URL('karta.html?v10',location.href).href+'#'+encodeURIComponent(payload);
 }
 
 /* ================= STAV ================= */
@@ -565,7 +565,7 @@ $('handedRows').onclick=e=>{
   const h=handed[Number(row.dataset.h)]; if(!h) return;
   const box=$('againQR'); box.innerHTML='';
   try{ new QRCode(box,{text:mcUrl(h.payload),width:250,height:250,
-    colorDark:'#0A0912',colorLight:'#ffffff',correctLevel:QRCode.CorrectLevel.M}); }
+    colorDark:'#08120F',colorLight:'#ffffff',correctLevel:QRCode.CorrectLevel.M}); }
   catch(err){ box.textContent=h.code; }
   $('againCode').textContent=h.code;
   $('againWho').textContent=(h.who?h.who+' · ':'')+fmt(h.amt)+' Kč'+(h.demo?' · ukázková karta':'');
@@ -583,7 +583,7 @@ async function newDemoCard(){
   $('demoWho').value='';
   const box=$('demoQR'); box.innerHTML='';
   try{ new QRCode(box,{text:mcUrl(payload),width:230,height:230,
-    colorDark:'#0A0912',colorLight:'#ffffff',correctLevel:QRCode.CorrectLevel.M}); }
+    colorDark:'#08120F',colorLight:'#ffffff',correctLevel:QRCode.CorrectLevel.M}); }
   catch(e){ box.textContent=code; }
 }
 $('demoNew').onclick=newDemoCard;
@@ -823,7 +823,7 @@ async function drawReceipt(rec){
   const INK='#14121C', DIM='#6B6580';
   let y=88;
   c.textAlign='center';
-  c.fillStyle='#7C3AED'; c.font='700 20px '+M; sp('7px');
+  c.fillStyle='#159C89'; c.font='700 20px '+M; sp('7px');
   c.fillText('DOKLAD O ČERPÁNÍ VOUCHERU',W/2,y); sp('0px'); y+=54;
   c.fillStyle=INK; c.font='800 40px '+D; c.fillText(TERMINAL.merchant,W/2,y); y+=34;
   c.fillStyle=DIM; c.font='400 19px '+M;
@@ -946,7 +946,7 @@ function qrCanvas(text,size){
     const box=document.createElement('div');
     box.style.cssText='position:fixed;left:-9999px;top:0';
     document.body.appendChild(box);
-    try{ new QRCode(box,{text,width:size,height:size,colorDark:'#0A0912',colorLight:'#ffffff',
+    try{ new QRCode(box,{text,width:size,height:size,colorDark:'#08120F',colorLight:'#ffffff',
       correctLevel:QRCode.CorrectLevel.M}); }catch(e){}
     setTimeout(()=>{
       const c=box.querySelector('canvas');
@@ -972,10 +972,10 @@ async function drawVoucher(code,amt,exp){
 
   // pozadí
   const g=c.createLinearGradient(0,0,0,H);
-  g.addColorStop(0,'#221A3E'); g.addColorStop(.55,'#16132A'); g.addColorStop(1,'#0A0912');
+  g.addColorStop(0,'#221A3E'); g.addColorStop(.55,'#0F211C'); g.addColorStop(1,'#08120F');
   c.fillStyle=g; c.fillRect(0,0,W,H);
   const rg=c.createRadialGradient(W*.5,-H*.05,0,W*.5,-H*.05,W*.95);
-  rg.addColorStop(0,'rgba(157,92,246,.35)'); rg.addColorStop(1,'rgba(157,92,246,0)');
+  rg.addColorStop(0,'rgba(34,199,176,.35)'); rg.addColorStop(1,'rgba(34,199,176,0)');
   c.fillStyle=rg; c.fillRect(0,0,W,H*.6);
 
   // rámeček
@@ -985,7 +985,7 @@ async function drawVoucher(code,amt,exp){
   c.textAlign='center';
 
   // hlavička
-  c.fillStyle='#C084FC'; c.font='600 26px '+MONO; sp('9px');
+  c.fillStyle='#6FE9DA'; c.font='600 26px '+MONO; sp('9px');
   c.fillText('DÁRKOVÝ POUKAZ',W/2,168); sp('0px');
 
   c.fillStyle='#F2EEFA'; c.font='800 66px '+DISP;
@@ -998,7 +998,7 @@ async function drawVoucher(code,amt,exp){
   c.strokeStyle='rgba(255,255,255,.14)'; c.lineWidth=2;
   c.setLineDash([9,11]); c.beginPath(); c.moveTo(140,364); c.lineTo(W-140,364); c.stroke();
   c.setLineDash([]);
-  c.fillStyle='#0A0912';
+  c.fillStyle='#08120F';
   c.beginPath(); c.arc(44,364,30,0,7); c.fill();
   c.beginPath(); c.arc(W-44,364,30,0,7); c.fill();
   c.strokeStyle='rgba(255,255,255,.13)';

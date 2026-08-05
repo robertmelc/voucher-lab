@@ -3,16 +3,16 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<meta name="theme-color" content="#0B0A14">
+<meta name="theme-color" content="#08120F">
 <title>Čtečka — bakaláři.app</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600..800&family=DM+Sans:wght@400;500;700&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
 <style>
 :root{
-  --void:#0B0A14; --panel:#17142A; --panel2:#211B3A; --edge:rgba(255,255,255,.09);
+  --void:#08120F; --panel:#0F211C; --panel2:#163029; --edge:rgba(255,255,255,.09);
   --edge-hot:rgba(255,255,255,.16);
-  --violet:#9D5CF6; --violet-lit:#C084FC;
+  --violet:#22C7B0; --violet-lit:#6FE9DA;
   --signal:#46E39A; --warn:#F0B429; --bad:#E5786B;
   --ink:#F2EEFA; --ink-2:#9A8CBB; --ink-3:#5F5382;
   --mono:'JetBrains Mono',ui-monospace,monospace;
@@ -23,7 +23,7 @@
 html,body{margin:0;height:100%}
 body{
   background:
-    radial-gradient(120% 60% at 50% -10%, rgba(157,92,246,.20), transparent 62%),
+    radial-gradient(120% 60% at 50% -10%, rgba(34,199,176,.20), transparent 62%),
     var(--void);
   color:var(--ink);font-family:var(--body);
   min-height:100svh;display:flex;justify-content:center;
@@ -35,8 +35,8 @@ body{
 .top{display:flex;align-items:center;justify-content:space-between;gap:12px}
 .brand{display:flex;align-items:center;gap:10px;min-width:0}
 .mark{width:30px;height:30px;border-radius:9px;flex:none;display:grid;place-items:center;
-  background:linear-gradient(140deg,var(--violet),#5B21B6);
-  box-shadow:0 0 0 1px rgba(255,255,255,.12) inset, 0 8px 22px rgba(157,92,246,.35);
+  background:linear-gradient(140deg,var(--violet),#0B5F55);
+  box-shadow:0 0 0 1px rgba(255,255,255,.12) inset, 0 8px 22px rgba(34,199,176,.35);
   font-family:var(--disp);font-weight:800;font-size:15px;color:#fff}
 .brand b{font-family:var(--disp);font-weight:800;font-size:16px;letter-spacing:-.02em;display:block;line-height:1}
 .brand small{font-family:var(--mono);font-size:9px;letter-spacing:.18em;color:var(--ink-3);text-transform:uppercase;display:block;margin-top:4px}
@@ -49,19 +49,19 @@ body{
 @keyframes pulse{50%{opacity:.35}}
 
 /* ---- hledáček ---- */
-.finder{position:relative;aspect-ratio:1;border-radius:22px;overflow:hidden;background:#05040A;
+.finder{position:relative;aspect-ratio:1;border-radius:22px;overflow:hidden;background:#04100D;
   border:1px solid var(--edge)}
 .finder video{width:100%;height:100%;object-fit:cover;display:block}
 .finder canvas{display:none}
 .veil{position:absolute;inset:0;display:grid;place-items:center;text-align:center;padding:26px;
-  background:rgba(5,4,10,.86);gap:10px;grid-auto-rows:min-content;align-content:center}
+  background:rgba(4,16,13,.86);gap:10px;grid-auto-rows:min-content;align-content:center}
 .veil p{margin:0;font-size:13px;color:var(--ink-2);line-height:1.6}
 .veil strong{font-family:var(--disp);font-size:17px;color:var(--ink);display:block;margin-bottom:2px}
 
 /* rohové závorky */
 .reticle{position:absolute;inset:14%;pointer-events:none;transition:inset .18s cubic-bezier(.3,1.5,.5,1)}
 .reticle span{position:absolute;width:30px;height:30px;border:2.5px solid var(--violet-lit);
-  filter:drop-shadow(0 0 8px rgba(192,132,252,.55));transition:border-color .18s}
+  filter:drop-shadow(0 0 8px rgba(111,233,218,.55));transition:border-color .18s}
 .reticle span:nth-child(1){top:0;left:0;border-right:0;border-bottom:0;border-radius:8px 0 0 0}
 .reticle span:nth-child(2){top:0;right:0;border-left:0;border-bottom:0;border-radius:0 8px 0 0}
 .reticle span:nth-child(3){bottom:0;left:0;border-right:0;border-top:0;border-radius:0 0 0 8px}
@@ -71,14 +71,14 @@ body{
 
 .sweep{position:absolute;left:14%;right:14%;height:2px;pointer-events:none;
   background:linear-gradient(90deg,transparent,var(--violet-lit),transparent);
-  box-shadow:0 0 14px 2px rgba(157,92,246,.6);animation:sweep 2.6s ease-in-out infinite}
+  box-shadow:0 0 14px 2px rgba(34,199,176,.6);animation:sweep 2.6s ease-in-out infinite}
 @keyframes sweep{0%,100%{top:16%;opacity:.25}50%{top:82%;opacity:1}}
 .finder.lock .sweep{opacity:0}
 @media (prefers-reduced-motion:reduce){.sweep,.state.live i{animation:none}}
 
 .tools{position:absolute;left:0;right:0;bottom:0;padding:14px;display:flex;gap:8px;justify-content:center;
-  background:linear-gradient(transparent,rgba(5,4,10,.75))}
-.tool{border:1px solid var(--edge-hot);background:rgba(11,10,20,.62);backdrop-filter:blur(8px);
+  background:linear-gradient(transparent,rgba(4,16,13,.75))}
+.tool{border:1px solid var(--edge-hot);background:rgba(8,18,15,.62);backdrop-filter:blur(8px);
   color:var(--ink);border-radius:11px;padding:9px 14px;font-family:var(--mono);font-size:10.5px;
   letter-spacing:.1em;text-transform:uppercase;cursor:pointer}
 .tool:disabled{opacity:.35;cursor:not-allowed}
@@ -113,7 +113,7 @@ body{
 .manual input{flex:1;min-width:0;background:var(--panel);border:1px solid var(--edge);border-radius:12px;
   padding:12px 14px;color:var(--ink);font-family:var(--mono);font-size:13px}
 .manual input::placeholder{color:var(--ink-3)}
-.manual button{border:1px solid var(--edge-hot);background:rgba(157,92,246,.16);color:var(--violet-lit);
+.manual button{border:1px solid var(--edge-hot);background:rgba(34,199,176,.16);color:var(--violet-lit);
   border-radius:12px;padding:0 16px;font-family:var(--mono);font-size:11px;letter-spacing:.1em;
   text-transform:uppercase;cursor:pointer}
 

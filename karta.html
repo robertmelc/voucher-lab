@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<meta name="theme-color" content="#0A0912">
+<meta name="theme-color" content="#08120F">
 <meta name="robots" content="noindex, nofollow">
 <title>Vaše karta</title>
 <link rel="manifest" href="manifest-karta.json">
@@ -18,23 +18,23 @@
 <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600..800&family=DM+Sans:wght@400;500;700&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
 <style>
 :root{
-  --void:#0A0912;--panel:#16132A;--panel2:#1F1A38;--edge:rgba(255,255,255,.09);--edge-hot:rgba(255,255,255,.18);
-  --violet:#9D5CF6;--violet-lit:#C084FC;--ok:#46E39A;--warn:#F0B429;--bad:#E5786B;
+  --void:#08120F;--panel:#0F211C;--panel2:#163029;--edge:rgba(255,255,255,.09);--edge-hot:rgba(255,255,255,.18);
+  --violet:#22C7B0;--violet-lit:#6FE9DA;--ok:#46E39A;--warn:#F0B429;--bad:#E5786B;
   --ink:#F2EEFA;--ink2:#9A8CBB;--ink3:#5F5382;
   --mono:'JetBrains Mono',ui-monospace,monospace;--disp:'Bricolage Grotesque',system-ui,sans-serif;--body:'DM Sans',system-ui,sans-serif;
 }
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 html,body{margin:0;min-height:100%}
-body{background:radial-gradient(125% 55% at 50% -8%,rgba(157,92,246,.22),transparent 60%),var(--void);
+body{background:radial-gradient(125% 55% at 50% -8%,rgba(34,199,176,.22),transparent 60%),var(--void);
   color:var(--ink);font-family:var(--body);display:flex;justify-content:center;
   padding:env(safe-area-inset-top) 0 env(safe-area-inset-bottom)}
 .wrap{width:100%;max-width:430px;padding:20px 18px 34px;display:flex;flex-direction:column;gap:16px}
 
 .card{border-radius:22px;padding:22px;position:relative;overflow:hidden;
-  background:linear-gradient(150deg,#2A2150,#171331 60%,#100D22);
+  background:linear-gradient(150deg,#1C443B,#122722 60%,#0A1714);
   border:1px solid var(--edge-hot);box-shadow:0 22px 50px rgba(0,0,0,.45)}
 .card::before{content:'';position:absolute;width:220px;height:220px;border-radius:50%;
-  right:-70px;top:-90px;background:radial-gradient(circle,rgba(192,132,252,.35),transparent 70%)}
+  right:-70px;top:-90px;background:radial-gradient(circle,rgba(111,233,218,.35),transparent 70%)}
 .eyebrow{font-family:var(--mono);font-size:9.5px;letter-spacing:.2em;text-transform:uppercase;color:var(--violet-lit)}
 .issuer{font-family:var(--disp);font-size:23px;font-weight:800;letter-spacing:-.02em;margin:6px 0 2px}
 .okruh{font-size:12.5px;color:var(--ink2)}
@@ -53,13 +53,13 @@ body{background:radial-gradient(125% 55% at 50% -8%,rgba(157,92,246,.22),transpa
 .why{display:grid;gap:7px;margin:-4px 0 14px}
 .why button{text-align:left;border:1px solid var(--edge);background:rgba(255,255,255,.04);color:var(--ink);
   border-radius:12px;padding:12px 14px;font-size:13.5px;cursor:pointer;font-family:var(--body)}
-.why button.on{border-color:var(--violet);background:rgba(157,92,246,.14);color:var(--ink)}
+.why button.on{border-color:var(--violet);background:rgba(34,199,176,.14);color:var(--ink)}
 .gdpr{font-size:11px;color:var(--ink3);line-height:1.55;margin:-6px 0 14px}
 .phoneline{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-top:11px;
   padding-top:10px;border-top:1px dashed rgba(255,255,255,.12);font-family:var(--mono);font-size:11px;color:var(--ink3)}
 .phoneline button{background:none;border:0;color:var(--violet-lit);font:inherit;cursor:pointer;padding:0;
   text-decoration:underline}
-.conf{border:1px solid rgba(157,92,246,.45);background:rgba(157,92,246,.12);border-radius:14px;
+.conf{border:1px solid rgba(34,199,176,.45);background:rgba(34,199,176,.12);border-radius:14px;
   padding:15px;margin-top:14px;text-align:center}
 .conf b{display:block;font-family:var(--disp);font-size:14px;margin-bottom:8px}
 .conf .code{font-family:var(--mono);font-size:34px;font-weight:700;letter-spacing:.22em;color:var(--violet-lit);
@@ -95,7 +95,7 @@ body{background:radial-gradient(125% 55% at 50% -8%,rgba(157,92,246,.22),transpa
 .tickets li{display:flex;justify-content:space-between;gap:10px;font-family:var(--mono);font-size:11px;
   color:var(--ink3);padding:5px 0;border-top:1px dashed rgba(255,255,255,.1)}
 
-.sheet{position:fixed;inset:0;z-index:60;background:rgba(6,5,12,.94);backdrop-filter:blur(6px);
+.sheet{position:fixed;inset:0;z-index:60;background:rgba(5,17,14,.94);backdrop-filter:blur(6px);
   display:none;align-items:flex-end;justify-content:center}
 .sheet.on{display:flex}
 .pane{width:100%;max-width:430px;background:linear-gradient(180deg,var(--panel2),var(--panel));
@@ -118,7 +118,7 @@ body{background:radial-gradient(125% 55% at 50% -8%,rgba(157,92,246,.22),transpa
 .kde span{display:block;font-size:12.5px;color:var(--ink2);line-height:1.7}
 
 dialog{border:0;background:none;padding:0;max-width:92vw}
-dialog::backdrop{background:rgba(5,4,10,.92)}
+dialog::backdrop{background:rgba(4,16,13,.92)}
 .big{background:#fff;border-radius:24px;padding:22px;display:grid;place-items:center;gap:14px}
 .big p{margin:0;font-family:var(--mono);font-size:13px;color:#14121C;letter-spacing:.04em}
 </style>
@@ -262,7 +262,7 @@ async function render(){
     return;
   }
 
-  const url=location.origin+location.pathname+'?v9#'+encodeURIComponent(raw.slice(raw.indexOf('MC1~')));
+  const url=location.origin+location.pathname+'?v10#'+encodeURIComponent(raw.slice(raw.indexOf('MC1~')));
   window.__okruh=v.okruh; window.__demo=!!v.demo; window.__by=v.by||''; window.__code=v.code;
 
   wrap.innerHTML=
@@ -287,15 +287,15 @@ async function render(){
     '<button class="btn" id="rejBtn">Tady to nevzali — získat los</button>'+
     '<div class="two"><button class="btn" id="wantBtn">Chci to pro svůj podnik</button>'+
     '<button class="btn" id="noBtn">Zatím ne</button></div>'+
-    '<p class="foot">Ukázková karta · bez serveru · hodnota je v odkazu · karta v9</p>';
+    '<p class="foot">Ukázková karta · bez serveru · hodnota je v odkazu · karta v10</p>';
 
   new QRCode(document.getElementById('qr'),{text:url,width:210,height:210,
-    colorDark:'#0A0912',colorLight:'#ffffff',correctLevel:QRCode.CorrectLevel.M});
+    colorDark:'#08120F',colorLight:'#ffffff',correctLevel:QRCode.CorrectLevel.M});
 
   document.getElementById('zoomBtn').onclick=()=>{
     const box=document.getElementById('qrbig');
     if(!box.hasChildNodes()){
-      new QRCode(box,{text:url,width:280,height:280,colorDark:'#0A0912',colorLight:'#ffffff',
+      new QRCode(box,{text:url,width:280,height:280,colorDark:'#08120F',colorLight:'#ffffff',
         correctLevel:QRCode.CorrectLevel.M});
       document.getElementById('bigcode').textContent=v.code;
     }
