@@ -92,6 +92,17 @@ body{background:radial-gradient(130% 55% at 50% -8%,rgba(157,92,246,.18),transpa
   font-size:12px;color:var(--ok);line-height:1.5}
 .step .them i{font-style:normal;font-family:var(--mono);font-size:9px;letter-spacing:.12em;
   text-transform:uppercase;color:var(--ink-3);display:block;margin-bottom:3px}
+.whoInput{width:100%;background:var(--void);border:1px solid var(--edge);border-radius:13px;
+  padding:13px 14px;color:var(--ink);font-size:14px;font-family:var(--body)}
+.whoInput::placeholder{color:var(--ink-3)}
+#handedBox .tx{cursor:pointer}
+#handedBox .tx i{background:var(--violet)}
+#handedBox .tx.demo i{background:var(--ink-3)}
+dialog.qrd{border:0;background:none;padding:0;max-width:92vw}
+dialog.qrd::backdrop{background:rgba(5,4,10,.93)}
+.qrd .inner{background:#fff;border-radius:24px;padding:22px;display:grid;place-items:center;gap:12px}
+.qrd .inner p{margin:0;font-family:var(--mono);font-size:13px;color:#14121C;letter-spacing:.05em;text-align:center}
+.qrd .inner small{font-family:var(--body);font-size:12px;color:#6B6580}
 .demoLine{font-family:var(--disp);font-size:15px;font-weight:700;text-align:center;color:var(--violet-lit)}
 
 /* ---- překryv skenování ---- */
@@ -208,6 +219,7 @@ button:focus-visible,input:focus-visible,summary:focus-visible{outline:2px solid
       <p>„Kdyby tohle mohli lidi uplatnit u vás, chtěl byste to?“</p>
       <div class="them"><i>on má na kartě</i>tlačítko Chci to pro svůj podnik</div></div>
     <div class="demoLine">Fly Me to the Moon</div>
+    <input class="whoInput" id="demoWho" placeholder="Komu ukazuji — jméno nebo podnik (nepovinné)" autocomplete="off">
     <button class="go" id="demoNew" style="background:var(--key);color:var(--ink)">Nová ukázková karta</button>
   </div>
 
@@ -229,6 +241,13 @@ button:focus-visible,input:focus-visible,summary:focus-visible{outline:2px solid
       <div><span>Uplatněno</span><b id="tSum">0</b></div>
       <div><span>Saldo</span><b id="tOff">0</b></div>
     </div>
+  </div>
+
+  <div class="jr" id="handedBox" hidden>
+    <h2>Rozdané karty <button id="handedClear" style="background:none;border:0;color:var(--ink-3);font:inherit;letter-spacing:.1em;cursor:pointer;padding:0">Vymazat</button></h2>
+    <div id="handedRows"></div>
+    <p class="foot" style="text-align:left;margin-top:10px;line-height:1.7">
+      Klepnutím na řádek se kód znovu ukáže.<br>Co s kartou dělá její držitel dál, se sem zatím nedostane — na to bude potřeba společná hlavní kniha.</p>
   </div>
 
   <div class="jr" id="demandBox" hidden>
@@ -257,6 +276,10 @@ button:focus-visible,input:focus-visible,summary:focus-visible{outline:2px solid
     <div class="row2"><button class="btn gho full" id="issueCancel">Zrušit</button></div>
   </div>
 </div>
+
+<dialog class="qrd" id="againDlg"><div class="inner">
+  <div id="againQR"></div><p id="againCode"></p><small id="againWho"></small>
+</div></dialog>
 
 <!-- překryv -->
 <div class="sheet" id="sheet">
@@ -436,11 +459,45 @@ $('tabAcc').onclick=()=>setMode('accept');
 $('tabIss').onclick=()=>setMode('issue');
 $('tabDemo').onclick=()=>setMode('demo');
 
+let handed=[];
+function hStore(){ try{ localStorage.setItem('mc_handed',JSON.stringify(handed)); }catch(e){} }
+try{ handed=JSON.parse(localStorage.getItem('mc_handed')||'[]'); }catch(e){ handed=[]; }
+
+function logHanded(code,amt,who,payload,demo){
+  handed.unshift({code,amt,who:who||'',payload,demo:!!demo,at:new Date().toISOString()});
+  if(handed.length>60) handed.pop();
+  hStore(); paintHanded();
+}
+function paintHanded(){
+  if(!handed.length){ $('handedBox').hidden=true; return; }
+  $('handedBox').hidden=false;
+  $('handedRows').innerHTML=handed.map((h,i)=>
+    '<div class="tx'+(h.demo?' demo':'')+'" data-h="'+i+'"><i></i><div class="c"><b>'+h.code+'</b><span>'+
+    (h.who?h.who+' · ':'')+(h.demo?'ukázka · ':'')+
+    new Date(h.at).toLocaleString('cs-CZ',{day:'numeric',month:'numeric',hour:'2-digit',minute:'2-digit'})+
+    '</span></div><div class="amt">'+fmt(h.amt)+' Kč</div></div>').join('');
+}
+$('handedRows').onclick=e=>{
+  const row=e.target.closest('[data-h]'); if(!row) return;
+  const h=handed[Number(row.dataset.h)]; if(!h) return;
+  const box=$('againQR'); box.innerHTML='';
+  try{ new QRCode(box,{text:mcUrl(h.payload),width:250,height:250,
+    colorDark:'#0A0912',colorLight:'#ffffff',correctLevel:QRCode.CorrectLevel.M}); }
+  catch(err){ box.textContent=h.code; }
+  $('againCode').textContent=h.code;
+  $('againWho').textContent=(h.who?h.who+' · ':'')+fmt(h.amt)+' Kč'+(h.demo?' · ukázková karta':'');
+  $('againDlg').showModal();
+};
+$('againDlg').onclick=e=>{ if(e.target.id==='againDlg') e.target.close(); };
+$('handedClear').onclick=()=>{ handed=[]; hStore(); paintHanded(); };
+
 let demoSeq=900;
 async function newDemoCard(){
   const exp=new Date(); exp.setMonth(exp.getMonth()+12);
   const code='DEMO-'+(demoSeq++);
   const payload=await mcBuild(code,500,exp.toISOString().slice(0,10),'wellness','Ukázka Mooncher',TERMINAL.agent);
+  logHanded(code,500,$('demoWho').value.trim(),payload,true);
+  $('demoWho').value='';
   const box=$('demoQR'); box.innerHTML='';
   try{ new QRCode(box,{text:mcUrl(payload),width:230,height:230,
     colorDark:'#0A0912',colorLight:'#ffffff',correctLevel:QRCode.CorrectLevel.M}); }
@@ -519,9 +576,13 @@ function renderIssued(code,amt,exp){
       'img{max-width:100%;max-height:100vh}</style><img src="'+url+'" onload="window.print()">');
     w.document.close();
   };
-  $('issueDone').onclick=()=>{
+  $('issueDone').onclick=async()=>{
     journal.unshift({id:seq++,code,amt,queued:false,void:false,dir:'out',
       at:new Date(),issuer:'Hotel Royal',auth:null});
+    try{
+      const pl=await mcBuild(code,amt,exp.toISOString().slice(0,10),issueProg,'Hotel Royal',TERMINAL.agent);
+      logHanded(code,amt,'',pl,false);
+    }catch(e){}
     paintJournal(); clear();
   };
 }
@@ -962,7 +1023,7 @@ function beep(ok){
   if(navigator.vibrate) navigator.vibrate(ok?30:[25,45,25]);
 }
 
-paintAmount();
+paintAmount(); paintHanded();
 </script>
 </body>
 </html>
