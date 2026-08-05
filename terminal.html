@@ -481,12 +481,13 @@ async function redeemConf(){
   if(raw.length<4){ msg.textContent='Zadejte celý čtyřznakový kód.'; return; }
   for(const h of handed){
     for(const act of ['fb','biz']){
-      const want=(await mcSign(h.code+'|'+act)).slice(0,4);
+     for(let n=1;n<=3;n++){
+      const want=(await mcSign(h.code+'|'+act+'|'+n)).slice(0,4);
       if(want===raw){
-        if(myTix.some(t=>t.code===h.code && t.act===act)){
+        if(myTix.some(t=>t.code===h.code && t.act===act && t.n===n)){
           msg.textContent='Tenhle kód už jste uplatnil.'; return;
         }
-        myTix.unshift({code:h.code,act,who:h.who||'',at:new Date().toISOString()});
+        myTix.unshift({code:h.code,act,n,who:h.who||'',at:new Date().toISOString()});
         myStore(); paintMyTix();
         msg.innerHTML='<span style="color:var(--ok);font-weight:700">Los je váš.</span> '+
           (act==='fb'?'Zapsal místo, kde kartu nevzali.':'Projevil zájem o vlastní podnik.')+
@@ -495,6 +496,7 @@ async function redeemConf(){
         beep(true);
         return;
       }
+     }
     }
   }
   msg.textContent='Kód nesedí k žádné z vašich rozdaných karet.';
