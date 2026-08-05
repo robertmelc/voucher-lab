@@ -238,6 +238,13 @@ button:focus-visible,input:focus-visible,summary:focus-visible{outline:2px solid
       <div id="myTixRows"></div>
     </div>
     <div class="step">
+      <div class="n">Data pro vyhodnocení</div>
+      <b style="font-size:15px">Poslat, co jste nasbíral</b>
+      <p>Odešle přehled vašich ukázek a odpovědí tomu, kdo test vede. Žádná osobní data, jen značky karet a odpovědi.</p>
+      <button class="go" id="expBtn" style="margin-top:10px;background:var(--key);color:var(--ink)">Odeslat data</button>
+      <div id="expMsg" style="margin-top:8px;font-size:12px;color:var(--ink-2)"></div>
+    </div>
+    <div class="step">
       <div class="n">Kdo testuje</div>
       <p style="margin-bottom:9px">Vlastní značka testera. Objeví se v číslech karet i v tom, kdo kartu předal — ať je poznat, čí ukázka to byla.</p>
       <div style="display:flex;gap:8px">
@@ -290,7 +297,7 @@ button:focus-visible,input:focus-visible,summary:focus-visible{outline:2px solid
   </details>
 
   <div class="wordmark"><img src="icon-192.png" alt=""><span>mooncher</span></div>
-  <p class="foot">Demo terminál · autorizace běží lokálně<br>data jen v paměti prohlížeče · terminál v12</p>
+  <p class="foot">Demo terminál · autorizace běží lokálně<br>data jen v paměti prohlížeče · terminál v13</p>
 </div>
 
 <div class="sheet" id="issueSheet">
@@ -409,7 +416,7 @@ async function mcBuild(code,bal,exp,okruh,issuer,by){
   return body+'~'+await mcSign(body);
 }
 function mcUrl(payload){
-  return new URL('karta.html?v12',location.href).href+'#'+encodeURIComponent(payload);
+  return new URL('karta.html?v13',location.href).href+'#'+encodeURIComponent(payload);
 }
 
 /* ================= STAV ================= */
@@ -510,7 +517,7 @@ function paintMyTix(){
       'border-bottom:1px solid var(--edge);font-size:12px">'+
       '<div style="min-width:0"><b style="font-family:var(--mono);font-size:12px;display:block">'+t.code+'</b>'+
       '<span style="color:var(--ink-3);font-size:11px">'+
-        (t.act==='biz'?'zájem o vlastní podnik':t.act==='no'?'odpověď zatím ne':'zapsal místo, kde nevzali')+
+        (t.act==='biz'?'zájem o vlastní podnik':t.act==='no'?('zatím ne'+(t.why?' — '+t.why:'')):'zapsal místo, kde nevzali')+
         (t.who?' · '+t.who:'')+'</span></div>'+
       '<span style="font-family:var(--mono);font-size:10.5px;color:var(--ink-3);white-space:nowrap">'+
         new Date(t.at).toLocaleString('cs-CZ',{day:'numeric',month:'numeric',hour:'2-digit',minute:'2-digit'})+
@@ -536,6 +543,7 @@ async function redeemConf(){
         const LBL={fb:'Zapsal místo, kde kartu nevzali.',
                    biz:'Projevil zájem o vlastní podnik.',
                    no:'Odpověděl „zatím ne“ — i to je informace.'};
+        if(act==='no') setTimeout(askWhy,300);
         msg.innerHTML='<span style="color:var(--ok);font-weight:700">Los je váš.</span> '+LBL[act]+
           (h.who?' — '+h.who:'');
         $('confIn').value='';
@@ -595,6 +603,7 @@ async function newDemoCard(){
 }
 $('demoNew').onclick=newDemoCard;
 $('agentBtn').onclick=()=>{ setAgent($('agentIn').value); newDemoCard(); };
+$('expBtn').onclick=doExport;
 $('whoBar').onclick=()=>{
   const v=prompt('Značka testera — objeví se v číslech karet i v tom, kdo kartu předal:',agentId);
   if(v!==null && v.trim()){ setAgent(v); if(mode==='demo') newDemoCard(); }
@@ -888,6 +897,51 @@ function showNewCode(payload,rest,v,amt){
     colorDark:'#111111',colorLight:'#ffffff',correctLevel:QRCode.CorrectLevel.M}); }
   catch(e){ $('newqr').textContent=v.code; }
   $('newDone').onclick=clear;
+}
+
+const WHYS=['O tomhle nerozhoduju já','Nemám na to zákazníky','Máme vlastní poukazy',
+            'Nechci další systém u pokladny','Jiný důvod'];
+function askWhy(){
+  const box=$('confMsg');
+  box.innerHTML+='<div id="whyBox" style="margin-top:10px"><div style="font-size:12px;color:var(--ink-2);'+
+    'margin-bottom:7px">Jaký uvedl důvod? Zapište, ať to víme.</div>'+
+    WHYS.map((w,i)=>'<button class="tool" data-why="'+i+'" style="display:block;width:100%;text-align:left;'+
+      'margin-bottom:5px;text-transform:none;letter-spacing:0;font-size:12.5px;font-family:var(--body)">'+w+
+      '</button>').join('')+'</div>';
+  $('whyBox').onclick=e=>{
+    const b=e.target.closest('[data-why]'); if(!b) return;
+    const w=WHYS[Number(b.dataset.why)];
+    if(myTix[0]) { myTix[0].why=w; myStore(); paintMyTix(); }
+    $('whyBox').innerHTML='<div style="font-size:12px;color:var(--ok)">Zapsáno: '+w+'</div>';
+  };
+}
+
+/* ================= EXPORT DAT ================= */
+function buildExport(){
+  return {
+    a: agentId,
+    ts: new Date().toISOString(),
+    t: myTix.map(x=>({c:x.code,k:x.act,w:x.who||'',y:x.why||'',d:x.at})),
+    h: handed.map(x=>({c:x.code,v:x.amt,w:x.who||'',m:x.demo?1:0,d:x.at})),
+    p: demand.map(x=>({c:x.code,r:x.rc,v:x.amt,o:x.okruh,d:x.at.toISOString?x.at.toISOString():x.at})),
+    j: journal.filter(x=>!x.void).map(x=>({c:x.code,v:x.amt,s:x.dir,d:x.at.toISOString?x.at.toISOString():x.at}))
+  };
+}
+async function doExport(){
+  const txt=JSON.stringify(buildExport());
+  const msg=$('expMsg');
+  try{
+    if(navigator.share){ await navigator.share({title:'Mooncher — data testera '+agentId,text:txt}); 
+      msg.textContent='Odesláno.'; return; }
+  }catch(e){}
+  try{ await navigator.clipboard.writeText(txt); msg.textContent='Zkopírováno do schránky — vložte do zprávy.'; }
+  catch(e){ 
+    const ta=document.createElement('textarea');
+    ta.value=txt; ta.style.cssText='position:fixed;left:8px;right:8px;top:20%;height:40vh;z-index:99;font-size:12px';
+    document.body.appendChild(ta); ta.select();
+    msg.textContent='Označte text a zkopírujte ručně.';
+    setTimeout(()=>ta.remove(),30000);
+  }
 }
 
 /* ================= DENÍK ================= */
