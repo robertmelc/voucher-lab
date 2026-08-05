@@ -347,7 +347,7 @@ async function render(){
     const nb=document.getElementById('noBtn');
     nb.textContent='Díky za odpověď'; nb.disabled=true;
     document.getElementById('wantBtn').disabled=true;
-    paintTix();
+    awardTix('Zatím ne: '+why,'no',why);
     actionCode(v.code,'no').then(c=>showConf(c,'Za odpověď „zatím ne“ — '+why+'.'));
   };
   document.getElementById('bizClose').onclick=()=>document.getElementById('bizSheet').classList.remove('on');
@@ -363,7 +363,7 @@ async function render(){
     document.getElementById('bizSheet').classList.remove('on');
     const wb=document.getElementById('wantBtn');
     wb.textContent='Ozveme se — díky!'; wb.classList.add('pri'); wb.disabled=true;
-    paintTix();
+    awardTix('Zájem: '+nm,'biz',nm);
     actionCode(v.code,'biz').then(c=>showConf(c,'Za zájem o vlastní podnik — '+nm+'.'));
   };
 }
@@ -383,9 +383,14 @@ function store(v){ try{ localStorage.setItem('mc_tix',JSON.stringify(v)); }catch
 function load(){ try{ return JSON.parse(localStorage.getItem('mc_tix')||'[]'); }catch(e){ return []; } }
 tix=load();
 
+function awardTix(label,kind,extra){
+  tix.unshift({name:label,key:kind+':'+(extra||label).toLowerCase(),amt:0,kind,
+    at:new Date().toISOString(),demo:!!window.__demo,by:window.__by});
+  store(tix); paintTix();
+}
 function monthCount(){
   const m=new Date().toISOString().slice(0,7);
-  return tix.filter(t=>t.at.slice(0,7)===m).length;
+  return tix.filter(t=>t.at.slice(0,7)===m && !t.kind).length;
 }
 function paintTix(){
   const box=document.getElementById('tix'); if(!box) return;
