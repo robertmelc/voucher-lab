@@ -247,11 +247,15 @@ button:focus-visible,input:focus-visible,summary:focus-visible{outline:2px solid
     <div class="step">
       <div class="n">Kdo testuje</div>
       <p style="margin-bottom:9px">Vlastní značka testera. Objeví se v číslech karet i v tom, kdo kartu předal — ať je poznat, čí ukázka to byla.</p>
-      <div style="display:flex;gap:8px">
+      <div style="display:flex;gap:8px;margin-bottom:8px">
         <input class="whoInput" id="agentIn" placeholder="např. RM, PATRICIE, PRZ-01"
           style="text-transform:uppercase;font-family:var(--mono);letter-spacing:.1em">
         <button class="tool" id="agentBtn" style="padding:0 16px">Uložit</button>
       </div>
+      <input class="whoInput" id="agentPhone" type="tel" inputmode="tel"
+        placeholder="Váš telefon — kam vám dáme vědět o výhře">
+      <p style="margin:8px 0 0;font-size:11.5px;color:var(--ink-3);line-height:1.5">
+        Za každou ukázku máte i vy los. Bez čísla vám výhru nemáme jak oznámit.</p>
     </div>
     <input class="whoInput" id="demoWho" placeholder="Komu ukazuji — jméno nebo podnik (nepovinné)" autocomplete="off">
     <button class="go" id="demoNew" style="background:var(--key);color:var(--ink)">Nová ukázková karta</button>
@@ -297,7 +301,7 @@ button:focus-visible,input:focus-visible,summary:focus-visible{outline:2px solid
   </details>
 
   <div class="wordmark"><img src="icon-192.png" alt=""><span>mooncher</span></div>
-  <p class="foot">Demo terminál · autorizace běží lokálně<br>data jen v paměti prohlížeče · terminál v13</p>
+  <p class="foot">Demo terminál · autorizace běží lokálně<br>data jen v paměti prohlížeče · terminál v14</p>
 </div>
 
 <div class="sheet" id="issueSheet">
@@ -416,7 +420,7 @@ async function mcBuild(code,bal,exp,okruh,issuer,by){
   return body+'~'+await mcSign(body);
 }
 function mcUrl(payload){
-  return new URL('karta.html?v13',location.href).href+'#'+encodeURIComponent(payload);
+  return new URL('karta.html?v14',location.href).href+'#'+encodeURIComponent(payload);
 }
 
 /* ================= STAV ================= */
@@ -495,14 +499,20 @@ $('tabIss').onclick=()=>setMode('issue');
 $('tabDemo').onclick=()=>setMode('demo');
 
 /* ---- identita testera: každý má vlastní řadu, ať je poznat kdo co ---- */
-let agentId='PRZ-0042';
-try{ agentId=localStorage.getItem('mc_agent')||agentId; }catch(e){}
+let agentId='PRZ-0042', agentPhone='';
+try{ agentId=localStorage.getItem('mc_agent')||agentId;
+     agentPhone=localStorage.getItem('mc_agent_phone')||''; }catch(e){}
+function setAgentPhone(v){
+  agentPhone=(v||'').trim();
+  try{ localStorage.setItem('mc_agent_phone',agentPhone); }catch(e){}
+}
 function setAgent(v){
   agentId=(v||'').trim().toUpperCase().replace(/[^A-Z0-9-]/g,'').slice(0,10)||'PRZ-0042';
   try{ localStorage.setItem('mc_agent',agentId); }catch(e){}
   TERMINAL.agent=agentId;
   $('tid').textContent='TESTER '+agentId+' · klepnutím změníte';
   const f=$('agentIn'); if(f) f.value=agentId;
+  const ph=$('agentPhone'); if(ph) ph.value=agentPhone;
 }
 
 let myTix=[];
@@ -602,7 +612,8 @@ async function newDemoCard(){
   catch(e){ box.textContent=code; }
 }
 $('demoNew').onclick=newDemoCard;
-$('agentBtn').onclick=()=>{ setAgent($('agentIn').value); newDemoCard(); };
+$('agentBtn').onclick=()=>{ setAgent($('agentIn').value); setAgentPhone($('agentPhone').value); newDemoCard(); };
+$('agentPhone').addEventListener('change',e=>setAgentPhone(e.target.value));
 $('expBtn').onclick=doExport;
 $('whoBar').onclick=()=>{
   const v=prompt('Značka testera — objeví se v číslech karet i v tom, kdo kartu předal:',agentId);
@@ -920,6 +931,7 @@ function askWhy(){
 function buildExport(){
   return {
     a: agentId,
+    ph: agentPhone,
     ts: new Date().toISOString(),
     t: myTix.map(x=>({c:x.code,k:x.act,w:x.who||'',y:x.why||'',d:x.at})),
     h: handed.map(x=>({c:x.code,v:x.amt,w:x.who||'',m:x.demo?1:0,d:x.at})),
@@ -928,8 +940,12 @@ function buildExport(){
   };
 }
 async function doExport(){
-  const txt=JSON.stringify(buildExport());
   const msg=$('expMsg');
+  if(!agentPhone){
+    const v=prompt('Váš telefon — bez něj vám nemáme jak oznámit výhru:', '');
+    if(v && v.replace(/\D/g,'').length>=9){ setAgentPhone(v); const f=$('agentPhone'); if(f) f.value=agentPhone; }
+  }
+  const txt=JSON.stringify(buildExport());
   try{
     if(navigator.share){ await navigator.share({title:'Mooncher — data testera '+agentId,text:txt}); 
       msg.textContent='Odesláno.'; return; }
