@@ -59,6 +59,37 @@ body{background:radial-gradient(125% 55% at 50% -8%,rgba(157,92,246,.22),transpa
 .bad p{margin:0;font-size:13px;color:var(--ink2);line-height:1.6}
 .foot{font-family:var(--mono);font-size:9.5px;color:var(--ink3);text-align:center;line-height:1.8}
 
+.tickets{border:1px solid rgba(240,180,41,.3);background:rgba(240,180,41,.08);border-radius:16px;padding:15px 17px}
+.tickets .top{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.tickets .top b{font-family:var(--disp);font-size:16px}
+.tickets .cnt{font-family:var(--mono);font-size:22px;font-weight:700;color:var(--warn)}
+.tickets p{margin:7px 0 0;font-size:12px;color:var(--ink2);line-height:1.55}
+.tickets ul{margin:11px 0 0;padding:0;list-style:none}
+.tickets li{display:flex;justify-content:space-between;gap:10px;font-family:var(--mono);font-size:11px;
+  color:var(--ink3);padding:5px 0;border-top:1px dashed rgba(255,255,255,.1)}
+
+.sheet{position:fixed;inset:0;z-index:60;background:rgba(6,5,12,.94);backdrop-filter:blur(6px);
+  display:none;align-items:flex-end;justify-content:center}
+.sheet.on{display:flex}
+.pane{width:100%;max-width:430px;background:linear-gradient(180deg,var(--panel2),var(--panel));
+  border:1px solid var(--edge-hot);border-radius:22px 22px 0 0;padding:20px 18px calc(24px + env(safe-area-inset-bottom));
+  max-height:92vh;overflow:auto}
+.pane h3{font-family:var(--disp);font-size:19px;margin:0 0 5px}
+.pane p.s{margin:0 0 15px;font-size:13px;color:var(--ink2);line-height:1.6}
+.pane label{display:block;font-family:var(--mono);font-size:9.5px;letter-spacing:.14em;text-transform:uppercase;
+  color:var(--ink3);margin:0 0 6px}
+.pane input{width:100%;background:var(--void);border:1px solid var(--edge);border-radius:13px;
+  padding:14px;color:var(--ink);font-size:15px;font-family:var(--body);margin-bottom:14px}
+.pane input::placeholder{color:var(--ink3)}
+.chips{display:flex;gap:7px;flex-wrap:wrap;margin:-6px 0 16px}
+.chip{border:1px solid var(--edge);background:rgba(255,255,255,.04);color:var(--ink2);border-radius:999px;
+  padding:8px 12px;font-size:12px;cursor:pointer}
+.chip:active{border-color:var(--violet)}
+.kde{border:1px solid rgba(70,227,154,.28);background:rgba(70,227,154,.07);border-radius:14px;
+  padding:13px 15px;margin-top:14px}
+.kde b{font-family:var(--disp);font-size:14px;display:block;margin-bottom:5px;color:var(--ok)}
+.kde span{display:block;font-size:12.5px;color:var(--ink2);line-height:1.7}
+
 dialog{border:0;background:none;padding:0;max-width:92vw}
 dialog::backdrop{background:rgba(5,4,10,.92)}
 .big{background:#fff;border-radius:24px;padding:22px;display:grid;place-items:center;gap:14px}
@@ -68,6 +99,20 @@ dialog::backdrop{background:rgba(5,4,10,.92)}
 <body>
 <div class="wrap" id="wrap">
   <p class="hint">Načítám kartu…</p>
+</div>
+
+<div class="sheet" id="rejSheet">
+  <div class="pane">
+    <h3>Kde to nevzali?</h3>
+    <p class="s">Zapište místo, kde jste chtěl kartou zaplatit a neprošla. Za každé nové místo dostanete los do slosování — i když jste nakonec nezaplatil.</p>
+    <label>Název podniku</label>
+    <input id="rejName" placeholder="např. Kavárna Na Rohu" autocomplete="off">
+    <label>Kolik jste tam chtěl utratit</label>
+    <input id="rejAmt" type="number" inputmode="numeric" placeholder="200" autocomplete="off">
+    <div class="chips" id="rejChips"></div>
+    <button class="btn pri" id="rejSave">Uložit a získat los</button>
+    <button class="btn" id="rejClose" style="margin-top:8px">Zpět</button>
+  </div>
 </div>
 
 <dialog id="zoom"><div class="big"><div id="qrbig"></div><p id="bigcode"></p></div></dialog>
@@ -127,6 +172,7 @@ async function render(){
   }
 
   const url=location.origin+location.pathname+'#'+encodeURIComponent(raw.slice(raw.indexOf('MC1~')));
+  window.__okruh=v.okruh;
 
   wrap.innerHTML=
     '<div class="card">'+
@@ -143,7 +189,9 @@ async function render(){
     '<div class="qrbox"><div id="qr"></div><p>Ukažte tenhle kód obsluze.<br>Odečte z něj jen to, co utratíte.</p></div>'+
     '<div class="line">Fly Me to the Moon</div>'+
     '<p class="hint">Zůstatek se nespotřebuje najednou. Co nevyčerpáte, zůstává na kartě.</p>'+
+    '<div class="tickets" id="tix"></div>'+
     '<button class="btn pri" id="zoomBtn">Zvětšit kód</button>'+
+    '<button class="btn" id="rejBtn">Tady to nevzali — získat los</button>'+
     '<button class="btn" id="wantBtn">Chci to pro svůj podnik</button>'+
     '<p class="foot">Ukázková karta · bez serveru · hodnota je v odkazu</p>';
 
@@ -161,12 +209,78 @@ async function render(){
   };
   document.getElementById('zoom').onclick=e=>{ if(e.target.id==='zoom') e.target.close(); };
 
+  paintTix();
+  document.getElementById('rejBtn').onclick=()=>{
+    document.getElementById('rejName').value='';
+    document.getElementById('rejAmt').value='';
+    document.getElementById('rejSheet').classList.add('on');
+    setTimeout(()=>document.getElementById('rejName').focus(),150);
+  };
+  document.getElementById('rejClose').onclick=()=>document.getElementById('rejSheet').classList.remove('on');
+  document.getElementById('rejSave').onclick=saveReject;
+  document.getElementById('rejChips').innerHTML=[100,200,500,1000]
+    .map(a=>'<span class="chip" data-a="'+a+'">'+a+' Kč</span>').join('');
+  document.getElementById('rejChips').onclick=e=>{
+    if(e.target.dataset.a) document.getElementById('rejAmt').value=e.target.dataset.a;
+  };
+
   document.getElementById('wantBtn').onclick=e=>{
     e.target.textContent='Ozveme se — díky!';
     e.target.classList.add('pri');
     e.target.disabled=true;
   };
 }
+/* ---------- losy za odmítnutí ---------- */
+const CAP_MONTH=3;                    // strop na měsíc
+const KDE={wellness:['Hotel Royal','Lázně Mariánské','Penzion U Lípy'],
+           gastro:['Café Luna','Hotel Royal — restaurace'],
+           charita:['Wellness Klub Ostrava']};
+let tix=[];
+
+function store(v){ try{ localStorage.setItem('mc_tix',JSON.stringify(v)); }catch(e){} }
+function load(){ try{ return JSON.parse(localStorage.getItem('mc_tix')||'[]'); }catch(e){ return []; } }
+tix=load();
+
+function monthCount(){
+  const m=new Date().toISOString().slice(0,7);
+  return tix.filter(t=>t.at.slice(0,7)===m).length;
+}
+function paintTix(){
+  const box=document.getElementById('tix'); if(!box) return;
+  const left=Math.max(0,CAP_MONTH-monthCount());
+  box.innerHTML=
+    '<div class="top"><b>Losy do slosování</b><span class="cnt">'+tix.length+'</span></div>'+
+    '<p>Los dostanete i za místo, kde kartu nevzali. Jedno místo se počítá jednou, '+
+    (left?('tento měsíc zbývá '+left+'.'):'tento měsíc už máte strop.')+'</p>'+
+    (tix.length?'<ul>'+tix.slice(0,5).map(t=>'<li><span>'+t.name+'</span><span>'+
+      new Date(t.at).toLocaleDateString('cs-CZ')+'</span></li>').join('')+'</ul>':'');
+}
+
+function saveReject(){
+  const name=document.getElementById('rejName').value.trim();
+  const amt=Number(document.getElementById('rejAmt').value)||0;
+  const btn=document.getElementById('rejSave');
+  if(!name){ document.getElementById('rejName').focus(); return; }
+  const key=name.toLowerCase();
+  if(tix.some(t=>t.key===key)){ btn.textContent='Tohle místo už máte zapsané'; 
+    setTimeout(()=>btn.textContent='Uložit a získat los',1800); return; }
+  if(monthCount()>=CAP_MONTH){ btn.textContent='Tento měsíc už máte strop';
+    setTimeout(()=>btn.textContent='Uložit a získat los',1800); return; }
+  tix.unshift({name,key,amt,at:new Date().toISOString()});
+  store(tix); paintTix();
+  document.getElementById('rejSheet').classList.remove('on');
+  const okr=(window.__okruh||'wellness');
+  const list=KDE[okr]||[];
+  const note=document.createElement('div');
+  note.className='kde';
+  note.innerHTML='<b>Los je váš</b><span>Zapsali jsme, že '+name+' kartu zatím nebere'+
+    (amt?(' a přišel o '+amt.toLocaleString('cs-CZ')+' Kč'):'')+'.</span>'+
+    (list.length?'<span style="margin-top:6px">Zatím ji vezmou zde: '+list.join(' · ')+'.</span>':'');
+  const anchor=document.getElementById('tix');
+  anchor.parentNode.insertBefore(note,anchor.nextSibling);
+  setTimeout(()=>note.remove(),9000);
+}
+
 render();
 </script>
 </body>
