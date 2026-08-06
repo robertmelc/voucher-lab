@@ -63,6 +63,9 @@ body{background:radial-gradient(125% 55% at 50% -8%,rgba(34,199,176,.22),transpa
 .meta span{display:block;font-family:var(--mono);font-size:8.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--ink3)}
 .meta b{display:block;font-family:var(--mono);font-size:12.5px;font-weight:700;margin-top:3px;word-break:break-all}
 
+.delta{margin-top:10px;display:inline-block;font-family:var(--mono);font-size:12px;font-weight:700;
+  padding:5px 11px;border-radius:999px;background:rgba(240,180,41,.15);color:var(--warn);
+  border:1px solid rgba(240,180,41,.35)}
 .pots{margin-top:14px;padding-top:12px;border-top:1px dashed rgba(255,255,255,.14)}
 .pot{display:flex;justify-content:space-between;align-items:baseline;gap:10px;padding:7px 0}
 .pot .n{font-size:13px;color:var(--ink2);min-width:0}
@@ -368,8 +371,14 @@ async function render(){
 
   const i1=raw.indexOf('MC1~'), i2=raw.indexOf('MC2~');
   const start=(i1<0)?i2:((i2<0)?i1:Math.min(i1,i2));
-  const url=location.origin+location.pathname+'?v24#'+b64u(raw.slice(start<0?0:start));
-  window.__okruh=v.okruh||(v.pots&&v.pots[0].okruh); window.__demo=!!v.demo; window.__by=v.by||''; window.__code=v.code;
+  const url=location.origin+location.pathname+'?v25#'+b64u(raw.slice(start<0?0:start));
+  window.__okruh=v.okruh||(v.pots&&v.pots[0].okruh);
+  /* porovnání s minulým načtením téhle karty — ať je vidět, co se právě odečetlo */
+  try{
+    const k='mc_last_'+v.code, prev=Number(localStorage.getItem(k));
+    if(!isNaN(prev) && prev>v.bal) window.__delta='−'+fmt(prev-v.bal)+' Kč od minule';
+    localStorage.setItem(k,String(v.bal));
+  }catch(e){} window.__demo=!!v.demo; window.__by=v.by||''; window.__code=v.code;
 
   wrap.innerHTML=
     '<div class="card">'+
@@ -380,6 +389,7 @@ async function render(){
       '<div class="okruh">'+(v.v2?'Skupina '+v.pots.length+' firem':(OKRUHY[v.okruh]||v.okruh))+'</div>'+
       '<div class="bal">'+fmt(v.bal)+' Kč</div>'+
       '<div class="balnote">'+(v.v2?'celkem k dispozici':'k dispozici')+'</div>'+
+      (window.__delta?'<div class="delta">'+window.__delta+'</div>':'')+
       (v.v2?'<div class="pots">'+v.pots.map(p=>
         '<div class="pot"><span class="n"><b>'+p.issuer+'</b><span>'+(OKRUHY[p.okruh]||p.okruh)+'</span></span>'+
         '<span class="v" style="color:'+(p.bal>0?'var(--ok)':'var(--ink3)')+'">'+fmt(p.bal)+' Kč</span></div>').join('')+
@@ -401,7 +411,7 @@ async function render(){
     '<div class="two"><button class="btn" id="wantBtn">Chci to pro svůj podnik</button>'+
     '<button class="btn" id="noBtn">Zatím ne</button></div>'+
     '<div class="wordmark"><img src="icon-192.png" alt=""><span>mooncher</span></div>'+
-    '<p class="foot">Ukázková karta · bez serveru · hodnota je v odkazu · karta v24</p>';
+    '<p class="foot">Ukázková karta · bez serveru · hodnota je v odkazu · karta v25</p>';
 
   new QRCode(document.getElementById('qr'),{text:url,width:250,height:250,
     colorDark:'#000000',colorLight:'#ffffff',correctLevel:QRCode.CorrectLevel.L});

@@ -319,7 +319,7 @@ button:focus-visible,input:focus-visible,summary:focus-visible{outline:2px solid
   </details>
 
   <div class="wordmark"><img src="icon-192.png" alt=""><span>mooncher</span></div>
-  <p class="foot">Demo terminál · autorizace běží lokálně<br>data jen v paměti prohlížeče · terminál v24</p>
+  <p class="foot">Demo terminál · autorizace běží lokálně<br>data jen v paměti prohlížeče · terminál v25</p>
 </div>
 
 <div class="sheet" id="issueSheet">
@@ -537,7 +537,7 @@ function unb64u(s){
 }
 function mcUrl(payload){
   /* base64url — v adrese pak nejsou procenta, která některé prohlížeče samy rozkódují */
-  return new URL('karta.html?v24',location.href).href+'#'+b64u(payload);
+  return new URL('karta.html?v25',location.href).href+'#'+b64u(payload);
 }
 
 /* ================= STAV ================= */
@@ -1027,18 +1027,23 @@ async function captureMulti(v, amt, pot, cross){
 function showNewCode2(payload,v,pot,amt,prevody){
   $('result').innerHTML=
     '<div class="slip" data-r="ok"><div class="head"><div class="glyph">✓</div>'+
-    '<div><b>Odečteno '+fmt(amt)+' Kč</b><span>'+pot.issuer+'</span></div></div>'+
-    '<div class="body"><div class="qrwrap"><div id="newqr"></div></div>'+
+    '<div><b>Krok 2 ze 2 — ať si to naskenuje</b><span>odečteno '+fmt(amt)+' Kč · '+pot.issuer+'</span></div></div>'+
+    '<div class="body"><div class="qrwrap" id="newqrwrap" style="cursor:zoom-in"><div id="newqr"></div>'+
+    '<div style="font-family:var(--mono);font-size:10.5px;color:#445B57;margin-top:8px">klepnutím zvětšíte</div></div>'+
     v.pots.map(p=>'<div class="kv"><span>'+OKRUHY[p.okruh]+' · '+p.issuer+'</span><b>'+fmt(p.bal)+' Kč</b></div>').join('')+
     '<div class="kv"><span>Celkem na kartě</span><b>'+fmt(v.pots.reduce((a,x)=>a+x.bal,0))+' Kč</b></div>'+
     (prevody.length?'<p class="note" style="border-color:rgba(240,180,41,.3);background:rgba(240,180,41,.08)">'+
       '<b style="color:var(--warn)">Převod mezi firmami</b><br>'+prevody.join('<br>')+
       '<br>Zaznamenejte v mezipodnikovém vyúčtování.</p>':'')+
-    '<p class="note">Ať si držitel naskenuje nový kód — karta se přepíše na aktuální zůstatky.</p>'+
+    '<p class="note">Bez naskenování tohohle kódu se držiteli karta nezmění — pořád mu bude ukazovat starý zůstatek. '+
+    'Je to tím, že hodnotu nese sám kód, ne server.</p>'+
     '<div style="margin-top:12px"><button class="btn pri full" id="newDone">Hotovo</button></div></div></div>';
-  try{ new QRCode($('newqr'),{text:mcUrl(payload),width:190,height:190,
-    colorDark:'#111111',colorLight:'#ffffff',correctLevel:QRCode.CorrectLevel.M}); }
+  const nu=mcUrl(payload);
+  try{ new QRCode($('newqr'),{text:nu,width:240,height:240,
+    colorDark:'#000000',colorLight:'#ffffff',correctLevel:QRCode.CorrectLevel.L}); }
   catch(e){ $('newqr').textContent=v.code; }
+  const wrap=$('newqrwrap');
+  if(wrap) wrap.onclick=()=>{ demoUrl=nu; openZoom(); };
   $('newDone').onclick=clear;
 }
 
@@ -1145,16 +1150,20 @@ function clear(){ $('result').innerHTML=''; amount=0; paintAmount(); }
 function showNewCode(payload,rest,v,amt){
   $('result').innerHTML=
     '<div class="slip" data-r="ok"><div class="head"><div class="glyph">✓</div>'+
-    '<div><b>Odečteno '+fmt(amt)+' Kč</b><span>nový kód pro držitele</span></div></div>'+
-    '<div class="body"><div class="qrwrap"><div id="newqr"></div></div>'+
+    '<div><b>Krok 2 ze 2 — ať si to naskenuje</b><span>odečteno '+fmt(amt)+' Kč</span></div></div>'+
+    '<div class="body"><div class="qrwrap" id="newqrwrap" style="cursor:zoom-in"><div id="newqr"></div>'+
+    '<div style="font-family:var(--mono);font-size:10.5px;color:#445B57;margin-top:8px">klepnutím zvětšíte</div></div>'+
     '<div class="kv"><span>Zbývá na kartě</span><b>'+fmt(rest)+' Kč</b></div>'+
     '<div class="kv"><span>Kód voucheru</span><b>'+v.code+'</b></div>'+
     '<p class="note">Ať si držitel naskenuje tenhle kód — karta se mu přepíše na nový zůstatek. '+
     'Bez serveru si hodnotu nese sám kód, proto se musí kód po každém čerpání vyměnit.</p>'+
     '<div style="margin-top:12px"><button class="btn pri full" id="newDone">Hotovo</button></div></div></div>';
-  try{ new QRCode($('newqr'),{text:mcUrl(payload),width:190,height:190,
-    colorDark:'#111111',colorLight:'#ffffff',correctLevel:QRCode.CorrectLevel.M}); }
+  const nu1=mcUrl(payload);
+  try{ new QRCode($('newqr'),{text:nu1,width:240,height:240,
+    colorDark:'#000000',colorLight:'#ffffff',correctLevel:QRCode.CorrectLevel.L}); }
   catch(e){ $('newqr').textContent=v.code; }
+  const w1=$('newqrwrap');
+  if(w1) w1.onclick=()=>{ demoUrl=nu1; openZoom(); };
   $('newDone').onclick=clear;
 }
 
