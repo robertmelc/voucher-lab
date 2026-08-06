@@ -2,6 +2,16 @@
 <html lang="cs">
 <head>
 <meta charset="UTF-8">
+<script>
+/* Kamera i podpis fungují jen přes zabezpečené spojení — vynutíme https */
+(function(){
+  var h=location.hostname;
+  if(location.protocol==='http:' && h!=='localhost' && h!=='127.0.0.1'){
+    location.replace(location.href.replace(/^http:/,'https:'));
+  }
+})();
+</script>
+
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <meta name="theme-color" content="#08120F">
 <meta name="robots" content="noindex, nofollow">
@@ -53,6 +63,12 @@ body{background:radial-gradient(125% 55% at 50% -8%,rgba(34,199,176,.22),transpa
 .meta span{display:block;font-family:var(--mono);font-size:8.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--ink3)}
 .meta b{display:block;font-family:var(--mono);font-size:12.5px;font-weight:700;margin-top:3px;word-break:break-all}
 
+.pots{margin-top:14px;padding-top:12px;border-top:1px dashed rgba(255,255,255,.14)}
+.pot{display:flex;justify-content:space-between;align-items:baseline;gap:10px;padding:7px 0}
+.pot .n{font-size:13px;color:var(--ink2);min-width:0}
+.pot .n b{display:block;color:var(--ink);font-size:13.5px;font-weight:700}
+.pot .n span{font-family:var(--mono);font-size:10px;color:var(--ink3);letter-spacing:.06em;text-transform:uppercase}
+.pot .v{font-family:var(--mono);font-size:15px;font-weight:700;white-space:nowrap}
 .by{margin-top:12px;font-size:11.5px;color:var(--ink3);font-family:var(--mono);letter-spacing:.04em}
 .by b{color:var(--violet-lit);font-weight:700}
 .two{display:grid;grid-template-columns:1fr 1fr;gap:8px}
@@ -299,6 +315,17 @@ function unb64u(s){
   for(let i=0;i<bin.length;i++) by[i]=bin.charCodeAt(i);
   return new TextDecoder().decode(by);
 }
+/* MC2: jedna karta, víc firem — MC2~kód~platnost~předal~okruh:vydavatel:zůstatek|…~podpis */
+function parse2(raw){
+  const t=(raw||'').trim(); const i=t.indexOf('MC2~');
+  if(i<0) return null;
+  const p=t.slice(i).split('~'); if(p.length<6) return null;
+  const pots=p[4].split('|').map(x=>{ const q=x.split(':');
+    return {okruh:q[0],issuer:q[1],bal:Number(q[2])||0}; });
+  return {v2:true,code:p[1],exp:p[2],by:p[3],pots,sig:p[5],body:p.slice(0,5).join('~'),
+          bal:pots.reduce((a,x)=>a+x.bal,0),demo:/^DEMO-/i.test(p[1])};
+}
+
 /* payload: MC1~kód~zůstatek~platnost~okruh~vydavatel~předal */
 function parse(raw){
   const t=(raw||'').trim();
@@ -316,10 +343,11 @@ function el(html){ const d=document.createElement('div'); d.innerHTML=html.trim(
 async function render(){
   /* base64url je hlavní formát; procentové kódování necháme kvůli starším odkazům */
   let raw=location.hash.slice(1);
-  try{ const dec=unb64u(raw); if(dec.indexOf('MC1~')===0) raw=dec; }catch(e){}
-  if(raw.indexOf('MC1~')<0){ try{ raw=decodeURIComponent(location.hash.slice(1)); }catch(e){} }
+  try{ const dec=unb64u(raw); if(dec.indexOf('MC1~')===0||dec.indexOf('MC2~')===0) raw=dec; }catch(e){}
+  if(raw.indexOf('MC1~')<0 && raw.indexOf('MC2~')<0){
+    try{ raw=decodeURIComponent(location.hash.slice(1)); }catch(e){} }
   const wrap=document.getElementById('wrap');
-  const v=parse(raw);
+  const v=parse2(raw)||parse(raw);
 
   if(!v){
     wrap.innerHTML='<div class="bad"><b>Karta chybí</b><p>Tahle stránka se otevírá naskenováním QR kódu voucheru. '+
@@ -338,25 +366,30 @@ async function render(){
     return;
   }
 
-  const url=location.origin+location.pathname+'?v17#'+b64u(raw.slice(raw.indexOf('MC1~')));
-  window.__okruh=v.okruh; window.__demo=!!v.demo; window.__by=v.by||''; window.__code=v.code;
+  const url=location.origin+location.pathname+'?v18#'+b64u(raw.slice(raw.indexOf('MC1~')));
+  window.__okruh=v.okruh||(v.pots&&v.pots[0].okruh); window.__demo=!!v.demo; window.__by=v.by||''; window.__code=v.code;
 
   wrap.innerHTML=
     '<div class="card">'+
       '<img src="icon-192.png" alt="Mooncher" style="width:34px;height:34px;border-radius:10px;'+
         'position:absolute;right:20px;top:20px;box-shadow:0 4px 14px rgba(0,0,0,.4)">'+
       '<div class="eyebrow">Digitální voucher</div>'+
-      '<div class="issuer">'+v.issuer+'</div>'+
-      '<div class="okruh">'+(OKRUHY[v.okruh]||v.okruh)+'</div>'+
+      '<div class="issuer">'+(v.v2?(v.pots[0].issuer.replace(/\s+\S+$/,'')||'Skupina'):v.issuer)+'</div>'+
+      '<div class="okruh">'+(v.v2?'Skupina '+v.pots.length+' firem':(OKRUHY[v.okruh]||v.okruh))+'</div>'+
       '<div class="bal">'+fmt(v.bal)+' Kč</div>'+
-      '<div class="balnote">k dispozici</div>'+
+      '<div class="balnote">'+(v.v2?'celkem k dispozici':'k dispozici')+'</div>'+
+      (v.v2?'<div class="pots">'+v.pots.map(p=>
+        '<div class="pot"><span class="n"><b>'+p.issuer+'</b><span>'+(OKRUHY[p.okruh]||p.okruh)+'</span></span>'+
+        '<span class="v" style="color:'+(p.bal>0?'var(--ok)':'var(--ink3)')+'">'+fmt(p.bal)+' Kč</span></div>').join('')+
+        '</div>':'')+
       '<div class="meta">'+
         '<div><span>Kód</span><b>'+v.code+'</b></div>'+
         '<div style="text-align:right"><span>Platnost do</span><b>'+v.exp+'</b></div>'+
       '</div>'+
       (v.by?'<div class="by">Kartu vám předal <b>'+v.by+'</b></div>':'')+
     '</div>'+
-    '<div class="qrbox"><div id="qr"></div><p>Ukažte tenhle kód obsluze.<br>Odečte z něj jen to, co utratíte.</p></div>'+
+    '<div class="qrbox"><div id="qr"></div><p>Ukažte tenhle kód obsluze.<br>'+
+      (v.v2?'Odečte se z té firmy, kam vaše útrata patří.':'Odečte z něj jen to, co utratíte.')+'</p></div>'+
     '<div class="line">Fly Me to the Moon</div>'+
     '<p class="hint">Zůstatek se nespotřebuje najednou. Co nevyčerpáte, zůstává na kartě.</p>'+
     (v.demo?'<div class="demoflag">Ukázková karta — losy se do slosování nezapočítávají</div>':'')+
@@ -366,7 +399,7 @@ async function render(){
     '<div class="two"><button class="btn" id="wantBtn">Chci to pro svůj podnik</button>'+
     '<button class="btn" id="noBtn">Zatím ne</button></div>'+
     '<div class="wordmark"><img src="icon-192.png" alt=""><span>mooncher</span></div>'+
-    '<p class="foot">Ukázková karta · bez serveru · hodnota je v odkazu · karta v17</p>';
+    '<p class="foot">Ukázková karta · bez serveru · hodnota je v odkazu · karta v18</p>';
 
   new QRCode(document.getElementById('qr'),{text:url,width:210,height:210,
     colorDark:'#08120F',colorLight:'#ffffff',correctLevel:QRCode.CorrectLevel.M});
@@ -537,6 +570,17 @@ render();
 if('serviceWorker' in navigator){
   window.addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}));
 }
+</script>
+<script>
+window.addEventListener('load',function(){
+  if(window.isSecureContext===false){
+    var d=document.createElement('div');
+    d.style.cssText='position:fixed;left:10px;right:10px;bottom:10px;z-index:999;background:#F0B429;'+
+      'color:#241A02;padding:13px 15px;border-radius:14px;font:600 13px/1.5 system-ui;box-shadow:0 10px 30px rgba(0,0,0,.5)';
+    d.textContent='Stránka neběží zabezpečeně — kamera ani podpis nebudou fungovat. Otevřete adresu s https:// na začátku.';
+    document.body.appendChild(d);
+  }
+});
 </script>
 </body>
 </html>

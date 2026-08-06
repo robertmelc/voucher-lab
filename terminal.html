@@ -2,6 +2,16 @@
 <html lang="cs">
 <head>
 <meta charset="UTF-8">
+<script>
+/* Kamera i podpis fungují jen přes zabezpečené spojení — vynutíme https */
+(function(){
+  var h=location.hostname;
+  if(location.protocol==='http:' && h!=='localhost' && h!=='127.0.0.1'){
+    location.replace(location.href.replace(/^http:/,'https:'));
+  }
+})();
+</script>
+
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <meta name="theme-color" content="#08120F">
 <title>Voucherový terminál</title>
@@ -257,6 +267,10 @@ button:focus-visible,input:focus-visible,summary:focus-visible{outline:2px solid
       <p style="margin:8px 0 0;font-size:11.5px;color:var(--ink-3);line-height:1.5">
         Za každou ukázku máte i vy los. Bez čísla vám výhru nemáme jak oznámit.</p>
     </div>
+    <div style="display:flex;gap:8px;margin-bottom:8px">
+      <button class="tool" id="modeOne" style="flex:1">Jedna firma</button>
+      <button class="tool on" id="modeThree" style="flex:1">Tři firmy</button>
+    </div>
     <input class="whoInput" id="demoWho" placeholder="Komu ukazuji — jméno nebo podnik (nepovinné)" autocomplete="off">
     <button class="go" id="demoNew" style="background:var(--key);color:var(--ink)">Nová ukázková karta</button>
   </div>
@@ -301,7 +315,7 @@ button:focus-visible,input:focus-visible,summary:focus-visible{outline:2px solid
   </details>
 
   <div class="wordmark"><img src="icon-192.png" alt=""><span>mooncher</span></div>
-  <p class="foot">Demo terminál · autorizace běží lokálně<br>data jen v paměti prohlížeče · terminál v17</p>
+  <p class="foot">Demo terminál · autorizace běží lokálně<br>data jen v paměti prohlížeče · terminál v18</p>
 </div>
 
 <div class="sheet" id="issueSheet">
@@ -354,6 +368,7 @@ const TERMINAL={
   issues:['wellness'],        // do kterých okruhů smí provozovna vydávat
   prefix:'ROY',
   agent:'PRZ-0042',           // výchozí; přepisuje se identitou testera
+  okruh:'wellness',           // vlastní kategorie provozovny — z ní se čerpá přednostně
   floorLimit:500          // do této částky terminál rozhodne sám, když nejede spojení
 };
 
@@ -455,6 +470,25 @@ function hmac256(key,msg){
 
 async function mcSign(body){ return mcAbc(hmac256(MCKEY, body), 6); }
 
+/* ---- MC2: jedna karta, víc firem ----
+   MC2~kód~platnost~předal~okruh:vydavatel:zůstatek|…~podpis            */
+function mcClean2(v){ return String(v==null?'':v).replace(/[~|:]/g,'-').trim(); }
+async function mcBuild2(code,exp,by,pots){
+  const body=['MC2',mcClean2(code),mcClean2(exp),mcClean2(by),
+    pots.map(p=>[mcClean2(p.okruh),mcClean2(p.issuer),Math.round(p.bal)].join(':')).join('|')].join('~');
+  return body+'~'+await mcSign(body);
+}
+function mcParse2(raw){
+  let t=(raw||'').trim();
+  if(t.indexOf('MC2~')<0){ try{ const d=unb64u(t.split('#').pop()); if(d.indexOf('MC2~')===0) t=d; }catch(e){} }
+  const i=t.indexOf('MC2~'); if(i<0) return null;
+  const p=t.slice(i).split('~'); if(p.length<6) return null;
+  const pots=p[4].split('|').map(x=>{ const q=x.split(':');
+    return {okruh:q[0],issuer:q[1],bal:Number(q[2])||0}; });
+  return {v2:true,code:p[1],exp:p[2],by:p[3],pots,sig:p[5],body:p.slice(0,5).join('~'),
+          bal:pots.reduce((a,x)=>a+x.bal,0)};
+}
+
 function mcParse(raw){
   let t=(raw||'').trim();
   if(t.indexOf('MC1~')<0){ try{ const d=unb64u(t.split('#').pop()); if(d.indexOf('MC1~')===0) t=d; }catch(e){} }
@@ -486,7 +520,7 @@ function unb64u(s){
 }
 function mcUrl(payload){
   /* base64url — v adrese pak nejsou procenta, která některé prohlížeče samy rozkódují */
-  return new URL('karta.html?v17',location.href).href+'#'+b64u(payload);
+  return new URL('karta.html?v18',location.href).href+'#'+b64u(payload);
 }
 
 /* ================= STAV ================= */
@@ -666,9 +700,28 @@ $('againDlg').onclick=e=>{ if(e.target.id==='againDlg') e.target.close(); };
 $('handedClear').onclick=()=>{ handed=[]; hStore(); paintHanded(); };
 
 let demoSeq=900;
+let demoThree=true;
+$('modeOne').onclick=()=>{ demoThree=false; $('modeOne').classList.add('on'); $('modeThree').classList.remove('on'); newDemoCard(); };
+$('modeThree').onclick=()=>{ demoThree=true; $('modeThree').classList.add('on'); $('modeOne').classList.remove('on'); newDemoCard(); };
+
 async function newDemoCard(){
   const exp=new Date(); exp.setMonth(exp.getMonth()+12);
   const code='DEMO-'+agentId.replace(/-/g,'')+'-'+(demoSeq++);
+  if(demoThree){
+    const pots=[{okruh:'wellness',issuer:'Hotel U Lípy',bal:1500},
+                {okruh:'gastro',issuer:'Restaurace U Lípy',bal:1000},
+                {okruh:'charita',issuer:'Wellness U Lípy',bal:500}];
+    const pl=await mcBuild2(code,exp.toISOString().slice(0,10),TERMINAL.agent,pots);
+    logHanded(code,3000,$('demoWho').value.trim(),pl,true);
+    $('demoWho').value='';
+    const b=$('demoQR'); b.innerHTML='';
+    try{ new QRCode(b,{text:mcUrl(pl),width:230,height:230,
+      colorDark:'#0A0912',colorLight:'#ffffff',correctLevel:QRCode.CorrectLevel.M}); }
+    catch(e){ b.textContent=code; }
+    $('demoCap').innerHTML='Jedna karta, tři firmy — hotel 1 500, restaurace 1 000, wellness 500.<br>Terminál čerpá z té, kam útrata patří.';
+    return;
+  }
+  $('demoCap').innerHTML='Ať to naskenuje fotoaparátem telefonu.<br>Nic si nemusí instalovat.';
   const payload=await mcBuild(code,500,exp.toISOString().slice(0,10),'wellness','Ukázka Mooncher',TERMINAL.agent);
   logHanded(code,500,$('demoWho').value.trim(),payload,true);
   $('demoWho').value='';
@@ -783,9 +836,39 @@ function submitStateless(v){
   pending=r; render(r); beep(r.ok);
 }
 
+function submitMulti(v){
+  const own=v.pots.find(p=>p.okruh===TERMINAL.okruh) || v.pots.find(p=>TERMINAL.accepts.includes(p.okruh));
+  if(!own){
+    const r={ok:false,rc:'57',code:v.code,amount,multi:v,
+             v:{issuer:v.pots[0].issuer,okruh:v.pots[0].okruh,balance:v.bal}};
+    pending=r; render(r); beep(false); return;
+  }
+  if(new Date(v.exp)<new Date()){
+    const r={ok:false,rc:'33',code:v.code,amount,multi:v,v:{issuer:own.issuer,okruh:own.okruh,balance:own.bal}};
+    pending=r; render(r); beep(false); return;
+  }
+  const jinde=v.pots.filter(p=>p!==own).reduce((a,x)=>a+x.bal,0);
+  const fake={issuer:own.issuer,okruh:own.okruh,balance:own.bal,expires:v.exp,status:'ok'};
+  if(own.bal>=amount){
+    const r={ok:true,rc:'00',code:v.code,v:fake,auth:authCode(),rest:own.bal-amount,
+             amount,multi:v,pot:own};
+    pending=r; render(r); beep(true); return;
+  }
+  const r={ok:false,rc:'51',code:v.code,v:fake,partial:own.bal,amount,multi:v,pot:own,jinde};
+  pending=r; render(r); beep(false);
+}
+
 function submit(raw){
   if(!raw.trim()) return;
   closeSheet();
+  const m2=mcParse2(raw);
+  if(m2){
+    mcSign(m2.body).then(sig=>{
+      if(sig!==m2.sig){ const r={ok:false,rc:'62',code:m2.code,amount}; pending=r; render(r); beep(false); return; }
+      submitMulti(m2);
+    });
+    return;
+  }
   const mv=mcParse(raw);
   if(mv){
     mcSign(mv.body).then(sig=>{
@@ -814,6 +897,20 @@ function render(r){
   rows.push(['Terminál', TERMINAL.tid+' / MID '+TERMINAL.mid]);
   rows.push(['Čas', new Date().toLocaleString('cs-CZ')]);
 
+  if(r.multi){
+    const list=r.multi.pots.map(p=>'<div class="kv"><span>'+OKRUHY[p.okruh]+' · '+p.issuer+
+      (r.pot&&p===r.pot?' <b style="color:var(--ok)">← čerpá se</b>':'')+'</span><b>'+fmt(p.bal)+' Kč</b></div>').join('');
+    rows.push(['—','—']);
+    setTimeout(()=>{
+      const body=document.querySelector('#result .body'); if(!body) return;
+      const box=document.createElement('div');
+      box.innerHTML='<div class="eyebrow" style="margin:14px 0 6px">Rozpis podle firem</div>'+list;
+      body.insertBefore(box, body.querySelector('.note'));
+      const dash=[...body.querySelectorAll('.kv')].find(k=>k.textContent.trim()==='——');
+      if(dash) dash.remove();
+    },0);
+  }
+
   let note='', acts='';
   if(r.ok && !r.queued){
     note='Peníze jsou rezervované. Potvrzením se odečtou z voucheru a připíšou provozovně.';
@@ -822,6 +919,12 @@ function render(r){
   }else if(r.queued){
     note='Autorizační centrum je nedostupné. Transakce je do limitu terminálu přijatá na jeho odpovědnost a odešle se, jakmile se spojení obnoví.';
     acts='<button class="btn pri full" id="capture">Přijmout a zařadit do fronty</button>';
+  }else if(r.rc==='51' && r.multi && r.jinde>0){
+    note='U této firmy zbývá '+fmt(r.partial)+' Kč, ale na kartě je celkem '+fmt(r.multi.bal)+
+      ' Kč. Rozdíl lze pokrýt z jiné firmy skupiny — je to převod mezi spřízněnými osobami a zaznamená se.';
+    acts='<button class="btn pri full" id="crossPay">Doplatit z jiné firmy</button>'
+        +'<button class="btn full" id="partial" style="margin-top:8px">Čerpat jen '+fmt(r.partial)+' Kč</button>'
+        +'<button class="btn gho full" id="dismiss" style="margin-top:8px">Zavřít</button>';
   }else if(r.rc==='51'){
     note='Na voucheru je '+fmt(r.partial)+' Kč. Lze čerpat tuto částku a zbytek doplatit jinak.';
     acts='<button class="btn pri full" id="partial">Čerpat '+fmt(r.partial)+' Kč</button>'
@@ -853,6 +956,8 @@ function render(r){
   if(par) par.onclick=()=>{ const a=r.partial; const rr=authorize(r.code,a); rr.amount=a; capture(a,rr); };
   if(dis) dis.onclick=clear;
   if(vd) vd.onclick=clear;
+  const cp=$('crossPay');
+  if(cp) cp.onclick=()=>captureMulti(r.multi, amount, r.pot, true);
   const wnt=$('want');
   if(wnt) wnt.onclick=()=>{
     demand.unshift({code:r.code||'—', rc:r.rc, amt:(r.amount!==undefined?r.amount:amount),
@@ -861,7 +966,44 @@ function render(r){
   };
 }
 
+async function captureMulti(v, amt, pot, cross){
+  let zbyva=amt, prevody=[];
+  const brat=Math.min(pot.bal, zbyva);
+  pot.bal-=brat; zbyva-=brat;
+  if(cross){
+    for(const p of v.pots){
+      if(p===pot || zbyva<=0) continue;
+      const b=Math.min(p.bal, zbyva);
+      if(b>0){ p.bal-=b; zbyva-=b; prevody.push(p.issuer+' → '+pot.issuer+': '+fmt(b)+' Kč'); }
+    }
+  }
+  const payload=await mcBuild2(v.code, v.exp, v.by, v.pots);
+  journal.unshift({id:seq++,code:v.code,amt:amt-zbyva,queued:false,void:false,dir:'in',
+    at:new Date(),issuer:pot.issuer,auth:authCode()});
+  paintJournal(); amount=0; paintAmount();
+  showNewCode2(payload, v, pot, amt-zbyva, prevody);
+}
+
+function showNewCode2(payload,v,pot,amt,prevody){
+  $('result').innerHTML=
+    '<div class="slip" data-r="ok"><div class="head"><div class="glyph">✓</div>'+
+    '<div><b>Odečteno '+fmt(amt)+' Kč</b><span>'+pot.issuer+'</span></div></div>'+
+    '<div class="body"><div class="qrwrap"><div id="newqr"></div></div>'+
+    v.pots.map(p=>'<div class="kv"><span>'+OKRUHY[p.okruh]+' · '+p.issuer+'</span><b>'+fmt(p.bal)+' Kč</b></div>').join('')+
+    '<div class="kv"><span>Celkem na kartě</span><b>'+fmt(v.pots.reduce((a,x)=>a+x.bal,0))+' Kč</b></div>'+
+    (prevody.length?'<p class="note" style="border-color:rgba(240,180,41,.3);background:rgba(240,180,41,.08)">'+
+      '<b style="color:var(--warn)">Převod mezi firmami</b><br>'+prevody.join('<br>')+
+      '<br>Zaznamenejte v mezipodnikovém vyúčtování.</p>':'')+
+    '<p class="note">Ať si držitel naskenuje nový kód — karta se přepíše na aktuální zůstatky.</p>'+
+    '<div style="margin-top:12px"><button class="btn pri full" id="newDone">Hotovo</button></div></div></div>';
+  try{ new QRCode($('newqr'),{text:mcUrl(payload),width:190,height:190,
+    colorDark:'#111111',colorLight:'#ffffff',correctLevel:QRCode.CorrectLevel.M}); }
+  catch(e){ $('newqr').textContent=v.code; }
+  $('newDone').onclick=clear;
+}
+
 async function capture(amt,r){
+  if(r.multi){ return captureMulti(r.multi, amt, r.pot, false); }
   if(r.stateless){
     const v=r.stateless, rest=v.bal-amt;
     const payload=await mcBuild(v.code,rest,v.exp,v.okruh,v.issuer,v.by);
@@ -1264,6 +1406,17 @@ $('confIn').addEventListener('keydown',e=>{ if(e.key==='Enter') redeemConf(); })
 if('serviceWorker' in navigator){
   window.addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}));
 }
+</script>
+<script>
+window.addEventListener('load',function(){
+  if(window.isSecureContext===false){
+    var d=document.createElement('div');
+    d.style.cssText='position:fixed;left:10px;right:10px;bottom:10px;z-index:999;background:#F0B429;'+
+      'color:#241A02;padding:13px 15px;border-radius:14px;font:600 13px/1.5 system-ui;box-shadow:0 10px 30px rgba(0,0,0,.5)';
+    d.textContent='Stránka neběží zabezpečeně — kamera ani podpis nebudou fungovat. Otevřete adresu s https:// na začátku.';
+    document.body.appendChild(d);
+  }
+});
 </script>
 </body>
 </html>
