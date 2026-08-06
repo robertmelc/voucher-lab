@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+<meta charset="UTF-8">
+<script>
+/* Kamera i podpis fungují jen přes zabezpečené spojení — vynutíme https */
+(function(){
+  var h=location.hostname;
+  if(location.protocol==='http:' && h!=='localhost' && h!=='127.0.0.1'){
+    location.replace(location.href.replace(/^http:/,'https:'));
+  }
+})();
+</script>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#08120F">
+<meta name="robots" content="noindex, nofollow">
+<title>Voucherová revize — mooncher</title>
+<link rel="apple-touch-icon" href="icon-180.png">
+<link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600..800&family=DM+Sans:wght@400;500;700&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --void:#08120F;--panel:#0F211C;--panel2:#163029;--key:#1B3A32;
+  --edge:rgba(255,255,255,.10);--edge-hot:rgba(255,255,255,.20);
+  --teal:#22C7B0;--teal-lit:#6FE9DA;--ok:#46E39A;--warn:#F0B429;--bad:#E5786B;
+  --ink:#EAF6F2;--ink2:#8FA9A4;--ink3:#5B7671;
+  --mono:'JetBrains Mono',ui-monospace,monospace;--disp:'Bricolage Grotesque',system-ui,sans-serif;--body:'DM Sans',system-ui,sans-serif;
+}
+*{box-sizing:border-box}
+body{margin:0;background:radial-gradient(105% 40% at 50% -5%,rgba(34,199,176,.15),transparent 55%),var(--void);
+  color:var(--ink);font-family:var(--body);line-height:1.65}
+.wrap{max-width:980px;margin:0 auto;padding:28px 18px 70px;display:flex;flex-direction:column;gap:22px}
+
+header{display:flex;align-items:center;gap:12px}
+header img{width:38px;height:38px;border-radius:12px;display:block}
+header b{font-family:var(--disp);font-weight:800;font-size:18px;letter-spacing:-.02em;display:block;line-height:1}
+header span{font-family:var(--mono);font-size:9px;letter-spacing:.16em;text-transform:uppercase;color:var(--ink3);display:block;margin-top:4px}
+h1{font-family:var(--disp);font-size:clamp(26px,5.4vw,36px);font-weight:800;letter-spacing:-.03em;margin:14px 0 0;line-height:1.06}
+.lede{color:var(--ink2);font-size:15px;margin:12px 0 0;max-width:62ch}
+
+h2{font-family:var(--mono);font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:var(--ink3);margin:0 0 12px;font-weight:400}
+.card{background:linear-gradient(180deg,var(--panel2),var(--panel));border:1px solid var(--edge);
+  border-radius:18px;padding:20px}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+@media (max-width:760px){.two{grid-template-columns:1fr}}
+.fld{margin-bottom:13px}
+label{display:block;font-family:var(--mono);font-size:9.5px;letter-spacing:.14em;text-transform:uppercase;
+  color:var(--ink3);margin:0 0 6px}
+label small{display:block;font-family:var(--body);font-size:11.5px;letter-spacing:0;text-transform:none;
+  color:var(--ink3);margin-top:3px}
+input,select{width:100%;background:var(--void);border:1px solid var(--edge);border-radius:12px;
+  padding:13px;color:var(--ink);font-family:var(--mono);font-size:14px}
+input:focus-visible,select:focus-visible,button:focus-visible{outline:2px solid var(--teal-lit);outline-offset:2px}
+button{border:1px solid var(--edge-hot);background:rgba(255,255,255,.06);color:var(--ink);border-radius:13px;
+  padding:14px 18px;font-size:14px;font-weight:700;cursor:pointer;font-family:var(--body)}
+button.pri{background:var(--teal);color:#04231E;border-color:transparent}
+.row{display:flex;gap:9px;flex-wrap:wrap}
+
+/* výstup */
+.out{display:none}
+.out.on{display:block}
+.headline{background:linear-gradient(150deg,#1C443B,#0C201B);border:1px solid rgba(34,199,176,.4);
+  border-radius:20px;padding:24px}
+.headline .lab{font-family:var(--mono);font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:var(--teal-lit)}
+.headline b{display:block;font-family:var(--disp);font-size:clamp(30px,7vw,44px);font-weight:800;
+  letter-spacing:-.03em;line-height:1.05;margin:10px 0 6px}
+.headline p{margin:0;font-size:14.5px;color:var(--ink2);max-width:56ch}
+
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:11px;margin-top:14px}
+.kpi{background:var(--panel);border:1px solid var(--edge);border-radius:15px;padding:15px}
+.kpi b{display:block;font-family:var(--mono);font-size:22px;font-weight:700;line-height:1.1}
+.kpi span{display:block;font-size:11.5px;color:var(--ink2);margin-top:5px;line-height:1.45}
+.kpi.g b{color:var(--ok)} .kpi.w b{color:var(--warn)} .kpi.r b{color:var(--bad)} .kpi.t b{color:var(--teal-lit)}
+
+.q{border-left:3px solid var(--teal);background:rgba(34,199,176,.07);border-radius:0 14px 14px 0;
+  padding:15px 17px;margin-top:11px}
+.q b{display:block;font-family:var(--disp);font-size:16px;margin-bottom:5px}
+.q p{margin:0;font-size:13.5px;color:var(--ink2)}
+.q.w{border-left-color:var(--warn);background:rgba(240,180,41,.07)}
+.q.r{border-left-color:var(--bad);background:rgba(229,120,107,.07)}
+
+.bar{height:9px;border-radius:5px;background:rgba(255,255,255,.08);overflow:hidden;margin:10px 0 6px}
+.bar i{display:block;height:100%;border-radius:5px;background:linear-gradient(90deg,var(--teal),var(--teal-lit))}
+.bar.w i{background:linear-gradient(90deg,#C98A12,var(--warn))}
+.meta{display:flex;justify-content:space-between;font-family:var(--mono);font-size:10.5px;color:var(--ink3)}
+
+.foot{font-family:var(--mono);font-size:10px;color:var(--ink3);line-height:1.9;border-top:1px solid var(--edge);padding-top:18px}
+@media print{
+  body{background:#fff;color:#111}
+  .noprint{display:none!important}
+  .card,.headline,.kpi,.q{background:#fff!important;border-color:#ccc!important;color:#111!important}
+  .headline b,.kpi b{color:#111!important}
+  .kpi span,.q p,.headline p{color:#444!important}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <img src="icon-192.png" alt="">
+    <div><b>mooncher</b><span>voucherová revize</span></div>
+  </header>
+
+  <div>
+    <h1>Jak na tom jste s poukazy</h1>
+    <p class="lede">Půl hodiny, pár čísel a jedna stránka na konci. Není to nabídka ani stanovisko — jsou to vaše vlastní čísla a otázky, které z nich plynou.</p>
+  </div>
+
+  <section class="card noprint">
+    <h2>Vstupy</h2>
+    <div class="two">
+      <div>
+        <div class="fld"><label>Název provozovny</label>
+          <input id="name" placeholder="Hotel U Lípy"></div>
+        <div class="fld"><label>Kolik poukazů ročně prodáte<small>Přibližně stačí. Vánoční špička se počítá.</small></label>
+          <input id="cnt" type="number" inputmode="numeric" placeholder="600"></div>
+        <div class="fld"><label>Průměrná hodnota jednoho poukazu (Kč)</label>
+          <input id="avg" type="number" inputmode="numeric" placeholder="2500"></div>
+        <div class="fld"><label>Platnost poukazu (měsíců)</label>
+          <input id="valid" type="number" inputmode="numeric" placeholder="12"></div>
+      </div>
+      <div>
+        <div class="fld"><label>Kolik procent se nevyčerpá<small>Když to nevíte, nechte prázdné — dosadíme oborové rozpětí.</small></label>
+          <input id="brk" type="number" inputmode="numeric" placeholder="nevím"></div>
+        <div class="fld"><label>Podíl prodaný přes cizí kanály (%)<small>Slevové portály, OTA, zprostředkovatelé.</small></label>
+          <input id="ext" type="number" inputmode="numeric" placeholder="20"></div>
+        <div class="fld"><label>Průměrná provize těch kanálů (%)</label>
+          <input id="fee" type="number" inputmode="numeric" placeholder="20"></div>
+        <div class="fld"><label>Na co poukaz zní</label>
+          <select id="kind">
+            <option value="multi">Na cokoli u nás — pobyt, jídlo, wellness</option>
+            <option value="single">Na jednu konkrétní službu</option>
+            <option value="amount">Jen na částku, bez určení</option>
+          </select></div>
+      </div>
+    </div>
+    <div class="row">
+      <button class="pri" id="run">Spočítat</button>
+      <button id="print">Vytisknout stránku</button>
+      <button id="demo">Vyplnit ukázková čísla</button>
+    </div>
+  </section>
+
+  <div class="out" id="out"></div>
+
+  <p class="foot">
+    ROOMS MANAGEMENT s.r.o. · orientační přehled, ne daňové ani právní stanovisko<br>
+    Závěry k DPH patří účetní, závěry k platebnímu styku a spotřebitelskému právu právníkovi.<br>
+    Nic z toho, co sem zadáte, se nikam neodesílá — počítá se to ve vašem prohlížeči.
+  </p>
+</div>
+
+<script>
+const $=id=>document.getElementById(id);
+const K=n=>Math.round(n).toLocaleString('cs-CZ')+' Kč';
+const PRAH=25000000;          // 1 mil. € orientačně v Kč
+const KURZ=25;
+
+$('demo').onclick=()=>{
+  $('name').value='Hotel U Lípy'; $('cnt').value=600; $('avg').value=2500;
+  $('valid').value=12; $('brk').value=''; $('ext').value=25; $('fee').value=20;
+  $('run').click();
+};
+$('print').onclick=()=>window.print();
+
+$('run').onclick=()=>{
+  const name=$('name').value.trim()||'Vaše provozovna';
+  const cnt=Number($('cnt').value)||0, avg=Number($('avg').value)||0;
+  const valid=Number($('valid').value)||12;
+  const extP=Math.min(100,Number($('ext').value)||0)/100;
+  const feeP=Math.min(100,Number($('fee').value)||0)/100;
+  const kind=$('kind').value;
+  const objem=cnt*avg;
+  if(!objem){ alert('Doplňte počet poukazů a jejich průměrnou hodnotu.'); return; }
+
+  const brkIn=$('brk').value.trim();
+  const brkLo = brkIn? Number(brkIn)/100 : .10;
+  const brkHi = brkIn? Number(brkIn)/100 : .20;
+  const propLo=objem*brkLo, propHi=objem*brkHi;
+
+  const provize=objem*extP*feeP;
+  const prahPct=Math.min(100,objem/PRAH*100);
+  const doPrahu=Math.max(0,PRAH-objem);
+
+  const kindTxt={
+    multi:'Poukaz na cokoli u vás míchá služby s různými sazbami DPH. To bývá znak víceúčelového poukazu, u kterého daň vzniká až při čerpání.',
+    single:'Poukaz na jednu konkrétní službu má známou sazbu i místo plnění. To bývá znak jednoúčelového poukazu, u kterého daň vzniká už při prodeji.',
+    amount:'Poukaz jen na částku bez určení služby se posuzuje podle toho, co za něj lze pořídit. Pokud je nabídka pestrá, blíží se to víceúčelovému poukazu.'
+  }[kind];
+
+  $('out').className='out on';
+  $('out').innerHTML=
+
+  '<section class="headline">'+
+    '<div class="lab">'+name+' · nevyčerpané poukazy ročně</div>'+
+    '<b>'+(brkIn? K(propLo) : K(propLo)+' – '+K(propHi))+'</b>'+
+    '<p>Tolik hodnoty vám každý rok zůstane v poukazech, které nikdo neuplatní. '+
+    'Není to zisk — dokud platnost běží, je to závazek v rozvaze a nespokojený člověk s papírem v šuplíku.</p>'+
+  '</section>'+
+
+  '<div class="kpis">'+
+    '<div class="kpi t"><b>'+K(objem)+'</b><span>objem prodaných poukazů ročně</span></div>'+
+    '<div class="kpi g"><b>'+K(objem/12)+'</b><span>průměrně měsíčně</span></div>'+
+    '<div class="kpi r"><b>'+K(provize)+'</b><span>ročně za provize cizím kanálům</span></div>'+
+    '<div class="kpi w"><b>'+valid+' měsíců</b><span>platnost — tak dlouho držíte cizí peníze</span></div>'+
+  '</div>'+
+
+  '<section class="card" style="margin-top:18px">'+
+    '<h2>Kde jste vůči ohlašovacímu prahu</h2>'+
+    '<div class="bar'+(prahPct>60?' w':'')+'"><i style="width:'+prahPct+'%"></i></div>'+
+    '<div class="meta"><span>'+prahPct.toFixed(1)+' % prahu</span><span>zbývá '+K(doPrahu)+'</span></div>'+
+    '<p style="font-size:13.5px;color:var(--ink2);margin:12px 0 0">'+
+      (prahPct<40
+        ? 'Jste hluboko pod hranicí a v dohledné době se k ní nedostanete. Ohlašovací povinnost vás netýká.'
+        : prahPct<100
+          ? 'Blížíte se hranici. Není to zákaz ani strop — je to povinnost jednou to oznámit České národní bance. Ale je dobré o tom vědět dřív, než se to stane.'
+          : 'Objem přesahuje hranici. Oznámení se podává jednou a orgán pak posoudí, zda se výjimka pro omezenou síť uplatní.')+
+    '</p>'+
+    '<p style="font-size:12px;color:var(--ink3);margin:8px 0 0">'+
+      'Hranice je 1 milion € za dvanáct měsíců, přepočteno kurzem '+KURZ+' Kč/€. Počítá se z objemu transakcí provedených poukazem, což nemusí být totéž co tržba z jejich prodeje.</p>'+
+  '</section>'+
+
+  '<section style="margin-top:18px">'+
+    '<h2>Čtyři otázky, které z toho plynou</h2>'+
+
+    '<div class="q"><b>Kdy odvádíte DPH z prodaného poukazu?</b><p>'+kindTxt+
+    ' Zeptejte se účetní, do které kategorie vaše poukazy patří — od toho se odvíjí, jestli daň odvádíte hned při prodeji, nebo až když host přijede. Rozdíl je v cash flow, ne v celkové částce.</p></div>'+
+
+    '<div class="q w"><b>Jak je v knihách vedený nevyčerpaný zůstatek?</b><p>'+
+    'Do konce platnosti je to závazek, ne výnos. Po expiraci se rozpouští — a podle typu poukazu se liší, jestli se něco děje i s daní. '+
+    'U vás jde ročně o '+(brkIn? K(propLo) : K(propLo)+' až '+K(propHi))+', tedy '+
+    'za dobu platnosti kolem '+K((brkIn?propLo:(propLo+propHi)/2)*(valid/12))+'.</p></div>'+
+
+    '<div class="q'+(provize>propLo?' r':'')+'"><b>Kolik vás stojí cizí kanály a kdy vidíte peníze?</b><p>'+
+    'Za provize odchází ročně '+K(provize)+'. K tomu se počítá doba, po kterou peníze drží zprostředkovatel mezi prodejem a čerpáním — to je půjčka, kterou mu poskytujete zdarma.</p></div>'+
+
+    '<div class="q"><b>Obstojí vaše platnost, kdyby si někdo stěžoval?</b><p>'+
+    (valid<12
+      ? 'Platnost pod rok bývá u předplacených částek konzumentsky citlivá. '
+      : 'Platnost '+valid+' měsíců je v obvyklém rozmezí. ')+
+    'Rozhodující je, co přesně jste si se zákazníkem sjednali a jestli šlo o zálohu na konkrétní službu, nebo o předplacenou hodnotu. Tohle je otázka na právníka, ne na nás.</p></div>'+
+  '</section>'+
+
+  '<section class="card" style="margin-top:18px">'+
+    '<h2>Co s tím jde dělat</h2>'+
+    '<p style="font-size:14px;color:var(--ink2);margin:0 0 10px">Nevyčerpané poukazy jsou největší jednotlivá položka celého vztahu a nikdo je neřídí, protože se neobjeví na žádné faktuře. Dvě cesty, jak s tím naložit:</p>'+
+    '<p style="font-size:14px;color:var(--ink2);margin:0 0 8px"><b style="color:var(--ink)">Vidět je.</b> Vědět v každém okamžiku, kolik nevyčerpané hodnoty držíte, komu patří a kdy propadá. Dnes to nemá skoro nikdo.</p>'+
+    '<p style="font-size:14px;color:var(--ink2);margin:0"><b style="color:var(--ink)">Nechat je dojet.</b> Poukaz, který jde uplatnit i jinde než u vás, se vyčerpá častěji — a vy místo mrtvého závazku dostanete hosta, který by jinak nepřijel.</p>'+
+  '</section>';
+
+  $('out').scrollIntoView({behavior:'smooth',block:'start'});
+};
+</script>
+</body>
+</html>

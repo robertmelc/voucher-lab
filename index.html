@@ -2,6 +2,16 @@
 <html lang="cs">
 <head>
 <meta charset="UTF-8">
+<script>
+/* Kamera i podpis fungují jen přes zabezpečené spojení — vynutíme https */
+(function(){
+  var h=location.hostname;
+  if(location.protocol==='http:' && h!=='localhost' && h!=='127.0.0.1'){
+    location.replace(location.href.replace(/^http:/,'https:'));
+  }
+})();
+</script>
+
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="theme-color" content="#08120F">
 <title>Voucher Lab — Mooncher</title>
@@ -71,7 +81,7 @@ footer{font-family:var(--mono);font-size:10px;color:var(--ink-3);line-height:1.9
     </div>
     <div class="eyebrow">Prototypy</div>
     <h1>Voucher Lab</h1>
-    <p class="lede">Tři prototypy k jedné myšlence: voucher nemá být jen <b>vydaný</b>, ale i <b>přijímaný</b>. Vydávání je software, akceptace je síť — a tady je vidět, co k té síti patří.</p>
+    <p class="lede">Prototypy k jedné myšlence: voucher nemá být jen <b>vydaný</b>, ale i <b>přijímaný</b>. Vydávání je software, akceptace je síť — a tady je vidět, co k té síti patří.</p>
   </header>
 
   <div class="flow">
@@ -79,6 +89,14 @@ footer{font-family:var(--mono);font-size:10px;color:var(--ink-3);line-height:1.9
   </div>
 
   <div class="cards">
+
+    <a class="card" href="revize.html">
+      <div class="no">00</div>
+      <h2>Voucherová revize</h2>
+      <p>Půl hodiny s klientem a jedna stránka na konci. Kolik mu ročně propadne nevyčerpaných poukazů, kdy odvádí DPH, co platí za distribuci a jak daleko je od ohlašovacího prahu. Jeho vlastní čísla, ne nabídka.</p>
+      <div class="tags"><span>vstup ke klientovi</span><span>propadlé</span><span>DPH</span><span>práh</span></div>
+      <div class="go">otevřít →</div>
+    </a>
 
     <a class="card" href="terminal.html" data-c="ok">
       <div class="no">01</div>
@@ -101,6 +119,38 @@ footer{font-family:var(--mono);font-size:10px;color:var(--ink-3);line-height:1.9
       <h2>Čtečka</h2>
       <p>Nejjednodušší díl. Přečte QR a řekne, co v něm je — kód voucheru, pozvánka, peněženka, nebo něco cizího. Neptá se nikoho, takže neověřuje platnost. Předchůdce terminálu.</p>
       <div class="tags"><span>čtení</span><span>rozpoznání</span><span>protokol</span></div>
+      <div class="go">otevřít →</div>
+    </a>
+
+    <a class="card" href="testeri.html">
+      <div class="no">04</div>
+      <h2>Pro testery</h2>
+      <p>Návod pro toho, kdo jde ukázku předvést. Příprava, celý postup krok za krokem a čtyři otázky, na které od něj chceme odpověď.</p>
+      <div class="tags"><span>návod</span><span>ukázka</span></div>
+      <div class="go">otevřít →</div>
+    </a>
+
+    <a class="card" href="manual.html">
+      <div class="no">05</div>
+      <h2>Manuál</h2>
+      <p>Kompletní popis všeho — části systému, terminál, karta, konzole, chybové kódy, technické poznámky a řešení potíží.</p>
+      <div class="tags"><span>šestnáct kapitol</span><span>reference</span></div>
+      <div class="go">otevřít →</div>
+    </a>
+
+    <a class="card" href="vizitka.html">
+      <div class="no">06</div>
+      <h2>Vizitka</h2>
+      <p>Digitální vizitka ve tvaru voucheru. Klikací kontakty, uložení do telefonu a QR rovnou do ukázky.</p>
+      <div class="tags"><span>kontakt</span><span>vCard</span></div>
+      <div class="go">otevřít →</div>
+    </a>
+
+    <a class="card" href="poslech.html">
+      <div class="no">07</div>
+      <h2>Poslech</h2>
+      <p>Diskuze nad celým modelem k poslechu — patnáct kapitol, čte hlas telefonu. Do auta.</p>
+      <div class="tags"><span>audio</span><span>20 minut</span></div>
       <div class="go">otevřít →</div>
     </a>
 
