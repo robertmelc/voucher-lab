@@ -319,7 +319,7 @@ button:focus-visible,input:focus-visible,summary:focus-visible{outline:2px solid
   </details>
 
   <div class="wordmark"><img src="icon-192.png" alt=""><span>mooncher</span></div>
-  <p class="foot">Demo terminál · autorizace běží lokálně<br>data jen v paměti prohlížeče · terminál v21</p>
+  <p class="foot">Demo terminál · autorizace běží lokálně<br>data jen v paměti prohlížeče · terminál v22</p>
 </div>
 
 <div class="sheet" id="issueSheet">
@@ -528,7 +528,7 @@ function unb64u(s){
 }
 function mcUrl(payload){
   /* base64url — v adrese pak nejsou procenta, která některé prohlížeče samy rozkódují */
-  return new URL('karta.html?v21',location.href).href+'#'+b64u(payload);
+  return new URL('karta.html?v22',location.href).href+'#'+b64u(payload);
 }
 
 /* ================= STAV ================= */
@@ -1376,7 +1376,11 @@ let stream=null,detector=null,raf=null;
 
 async function startCam(){
   try{
-    stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:'environment'},audio:false});
+    stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:'environment',
+      width:{ideal:1920},height:{ideal:1080}},audio:false});
+    try{ const tr=stream.getVideoTracks()[0], cp=tr.getCapabilities?tr.getCapabilities():{};
+      if(cp.focusMode && cp.focusMode.includes('continuous')) await tr.applyConstraints({advanced:[{focusMode:'continuous'}]});
+    }catch(e){}
     $('video').srcObject=stream; await $('video').play(); loop();
     $('sheetHint').textContent='Namiřte kameru na QR kód voucheru, nebo kód opište.';
   }catch(e){
@@ -1391,7 +1395,7 @@ async function loop(){
   frames++;
   if(frames%20===0){
     $('sheetHint').textContent = decodes
-      ? 'Snímám… hledám QR kód. Zkuste jiný odstup nebo víc světla.'
+      ? 'Snímám… hledám QR kód. U hustého kódu ho na druhém zařízení zvětšete klepnutím.'
       : 'Snímám, ale dekodér zatím nedostal obraz.';
   }
   if(v.readyState>=2 && v.videoWidth){
@@ -1400,13 +1404,16 @@ async function loop(){
     if(detector){ try{ const c=await detector.detect(v); if(c.length) hit=c[0].rawValue; }catch(e){} }
     else if(window.jsQR){
       const w=v.videoWidth,h=v.videoHeight;
-      { const s=Math.min(w,h),size=Math.min(s,600),cv=$('canvas'),cx=cv.getContext('2d',{willReadFrequently:true});
-        cv.width=size;cv.height=size;
-        cx.drawImage(v,(w-s)/2,(h-s)/2,s,s,0,0,size,size);
-        const d=cx.getImageData(0,0,size,size);
-        const r=jsQR(d.data,size,size,{inversionAttempts:'dontInvert'});
-        if(r&&r.data) hit=r.data;
-      }
+      /* střídáme celý čtverec a užší střed — u hustých kódů pomůže víc pixelů na čtvereček */
+      const zoom = (frames % 2) ? 1 : 0.62;
+      const src=Math.floor(Math.min(w,h)*zoom);
+      const size=Math.min(src,1280);
+      const cv=$('canvas'),cx=cv.getContext('2d',{willReadFrequently:true});
+      cv.width=size;cv.height=size;
+      cx.drawImage(v,(w-src)/2,(h-src)/2,src,src,0,0,size,size);
+      const d=cx.getImageData(0,0,size,size);
+      const r=jsQR(d.data,size,size,{inversionAttempts:'attemptBoth'});
+      if(r&&r.data) hit=r.data;
     }
     if(hit){ frames=0; decodes=0; submit(hit); return; }
   }
