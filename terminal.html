@@ -97,7 +97,11 @@ body{background:radial-gradient(130% 55% at 50% -8%,rgba(34,199,176,.18),transpa
 /* ---- režim ukázky ---- */
 #demoPane{display:none;flex-direction:column;gap:14px}
 #demoPane.on{display:flex}
-.demoQR{background:#fff;border-radius:22px;padding:20px;display:grid;place-items:center;gap:12px}
+.demoQR{background:#fff;border-radius:22px;padding:20px;display:grid;place-items:center;gap:12px;cursor:zoom-in}
+dialog.zoomd{border:0;background:none;padding:0;max-width:100vw;max-height:100vh}
+dialog.zoomd::backdrop{background:#fff}
+.zoomd .in{background:#fff;display:grid;place-items:center;gap:16px;padding:20px}
+.zoomd .in p{margin:0;font-family:var(--mono);font-size:13px;color:#14121C;letter-spacing:.06em;text-align:center}
 .demoQR p{margin:0;font-size:13px;color:#445B57;text-align:center;line-height:1.5;font-weight:600}
 .step{border:1px solid var(--edge);border-radius:15px;background:linear-gradient(180deg,var(--panel2),var(--panel));
   padding:14px 16px}
@@ -224,7 +228,7 @@ button:focus-visible,input:focus-visible,summary:focus-visible{outline:2px solid
   <div class="scopes" id="scopes"></div>
 
   <div id="demoPane">
-    <div class="demoQR"><div id="demoQR"></div><p id="demoCap">Ať to naskenuje fotoaparátem telefonu.<br>Nic si nemusí instalovat.</p></div>
+    <div class="demoQR" id="demoQRWrap" title="Klepnutím zvětšit"><div id="demoQR"></div><p id="demoLink" style="margin:0"></p><p id="demoCap">Ať to naskenuje fotoaparátem telefonu.<br>Nic si nemusí instalovat.</p></div>
     <div class="step"><div class="n">Krok 1 · vy</div><b>Podržte displej</b>
       <p>Nic nemačkejte. Kód je připravený.</p>
       <div class="them"><i>on uvidí</i>kartu s hodnotou 500 Kč na svém telefonu</div></div>
@@ -315,7 +319,7 @@ button:focus-visible,input:focus-visible,summary:focus-visible{outline:2px solid
   </details>
 
   <div class="wordmark"><img src="icon-192.png" alt=""><span>mooncher</span></div>
-  <p class="foot">Demo terminál · autorizace běží lokálně<br>data jen v paměti prohlížeče · terminál v18</p>
+  <p class="foot">Demo terminál · autorizace běží lokálně<br>data jen v paměti prohlížeče · terminál v20</p>
 </div>
 
 <div class="sheet" id="issueSheet">
@@ -329,6 +333,10 @@ button:focus-visible,input:focus-visible,summary:focus-visible{outline:2px solid
     <div class="row2"><button class="btn gho full" id="issueCancel">Zrušit</button></div>
   </div>
 </div>
+
+<dialog class="zoomd" id="zoomDlg"><div class="in">
+  <div id="zoomQR"></div><p id="zoomCap">Klepnutím zavřete</p>
+</div></dialog>
 
 <dialog class="qrd" id="againDlg"><div class="inner">
   <div id="againQR"></div><p id="againCode"></p><small id="againWho"></small>
@@ -520,7 +528,7 @@ function unb64u(s){
 }
 function mcUrl(payload){
   /* base64url — v adrese pak nejsou procenta, která některé prohlížeče samy rozkódují */
-  return new URL('karta.html?v18',location.href).href+'#'+b64u(payload);
+  return new URL('karta.html?v20',location.href).href+'#'+b64u(payload);
 }
 
 /* ================= STAV ================= */
@@ -700,6 +708,25 @@ $('againDlg').onclick=e=>{ if(e.target.id==='againDlg') e.target.close(); };
 $('handedClear').onclick=()=>{ handed=[]; hStore(); paintHanded(); };
 
 let demoSeq=900;
+let demoUrl='';
+function openZoom(){
+  if(!demoUrl) return;
+  const box=$('zoomQR'); box.innerHTML='';
+  const px=Math.min(Math.floor(Math.min(window.innerWidth,window.innerHeight)*0.82),640);
+  try{ new QRCode(box,{text:demoUrl,width:px,height:px,
+    colorDark:'#000000',colorLight:'#ffffff',correctLevel:QRCode.CorrectLevel.L}); }
+  catch(e){ box.textContent='—'; }
+  $('zoomDlg').showModal();
+}
+
+function setDemoLink(u){
+  demoUrl=u;
+  const el=$('demoLink'); if(!el) return;
+  el.innerHTML='<a href="'+u+'" target="_blank" rel="noopener" '+
+    'style="color:#0E7D6E;font-family:var(--mono);font-size:11.5px;text-decoration:underline">otevřít kartu odkazem</a>'+
+    '<span style="color:#7A8F8B;font-size:11px"> · když se QR nedaří naskenovat</span>';
+}
+
 let demoThree=true;
 $('modeOne').onclick=()=>{ demoThree=false; $('modeOne').classList.add('on'); $('modeThree').classList.remove('on'); newDemoCard(); };
 $('modeThree').onclick=()=>{ demoThree=true; $('modeThree').classList.add('on'); $('modeOne').classList.remove('on'); newDemoCard(); };
@@ -715,9 +742,11 @@ async function newDemoCard(){
     logHanded(code,3000,$('demoWho').value.trim(),pl,true);
     $('demoWho').value='';
     const b=$('demoQR'); b.innerHTML='';
-    try{ new QRCode(b,{text:mcUrl(pl),width:230,height:230,
-      colorDark:'#0A0912',colorLight:'#ffffff',correctLevel:QRCode.CorrectLevel.M}); }
+    const u3=mcUrl(pl);
+    try{ new QRCode(b,{text:u3,width:266,height:266,
+      colorDark:'#000000',colorLight:'#ffffff',correctLevel:QRCode.CorrectLevel.L}); }
     catch(e){ b.textContent=code; }
+    setDemoLink(u3);
     $('demoCap').innerHTML='Jedna karta, tři firmy — hotel 1 500, restaurace 1 000, wellness 500.<br>Terminál čerpá z té, kam útrata patří.';
     return;
   }
@@ -726,9 +755,11 @@ async function newDemoCard(){
   logHanded(code,500,$('demoWho').value.trim(),payload,true);
   $('demoWho').value='';
   const box=$('demoQR'); box.innerHTML='';
-  try{ new QRCode(box,{text:mcUrl(payload),width:230,height:230,
-    colorDark:'#08120F',colorLight:'#ffffff',correctLevel:QRCode.CorrectLevel.M}); }
+  const u1=mcUrl(payload);
+  try{ new QRCode(box,{text:u1,width:266,height:266,
+    colorDark:'#000000',colorLight:'#ffffff',correctLevel:QRCode.CorrectLevel.L}); }
   catch(e){ box.textContent=code; }
+  setDemoLink(u1);
 }
 $('demoNew').onclick=newDemoCard;
 $('agentBtn').onclick=()=>{ setAgent($('agentIn').value); setAgentPhone($('agentPhone').value); newDemoCard(); };
@@ -1398,6 +1429,8 @@ function beep(ok){
 }
 
 setAgent(agentId);
+$('demoQRWrap').onclick=openZoom;
+$('zoomDlg').onclick=()=>$('zoomDlg').close();
 paintAmount(); paintHanded(); paintMyTix();
 $('confBtn').onclick=redeemConf;
 $('confIn').addEventListener('keydown',e=>{ if(e.key==='Enter') redeemConf(); });
