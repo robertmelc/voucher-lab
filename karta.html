@@ -371,7 +371,7 @@ async function render(){
 
   const i1=raw.indexOf('MC1~'), i2=raw.indexOf('MC2~');
   const start=(i1<0)?i2:((i2<0)?i1:Math.min(i1,i2));
-  const url=location.origin+location.pathname+'?v26#'+b64u(raw.slice(start<0?0:start));
+  const url=location.origin+location.pathname+'?v27#'+b64u(raw.slice(start<0?0:start));
   window.__okruh=v.okruh||(v.pots&&v.pots[0].okruh);
   /* porovnání s minulým načtením téhle karty — ať je vidět, co se právě odečetlo */
   try{
@@ -411,7 +411,7 @@ async function render(){
     '<div class="two"><button class="btn" id="wantBtn">Chci to pro svůj podnik</button>'+
     '<button class="btn" id="noBtn">Zatím ne</button></div>'+
     '<div class="wordmark"><img src="icon-192.png" alt=""><span>mooncher</span></div>'+
-    '<p class="foot">Ukázková karta · bez serveru · hodnota je v odkazu · karta v26</p>';
+    '<p class="foot">Ukázková karta · bez serveru · hodnota je v odkazu · karta v27</p>';
 
   new QRCode(document.getElementById('qr'),{text:url,width:250,height:250,
     colorDark:'#000000',colorLight:'#ffffff',correctLevel:QRCode.CorrectLevel.L});

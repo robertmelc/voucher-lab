@@ -319,7 +319,7 @@ button:focus-visible,input:focus-visible,summary:focus-visible{outline:2px solid
   </details>
 
   <div class="wordmark"><img src="icon-192.png" alt=""><span>mooncher</span></div>
-  <p class="foot">Demo terminál · autorizace běží lokálně<br>data jen v paměti prohlížeče · terminál v26</p>
+  <p class="foot">Demo terminál · autorizace běží lokálně<br>data jen v paměti prohlížeče · terminál v27</p>
 </div>
 
 <div class="sheet" id="issueSheet">
@@ -413,9 +413,19 @@ const KDE={
   charita:['Wellness Klub Ostrava']
 };
 
+/* Bez společné hlavní knihy se dá stejný kód uplatnit opakovaně.
+   Terminál si aspoň pamatuje podpisy, které už jednou čerpal. */
+let spent=[];
+try{ spent=JSON.parse(localStorage.getItem('mc_spent')||'[]'); }catch(e){ spent=[]; }
+function markSpent(sig){
+  if(!sig || spent.includes(sig)) return;
+  spent.unshift(sig); if(spent.length>400) spent.pop();
+  try{ localStorage.setItem('mc_spent',JSON.stringify(spent)); }catch(e){}
+}
 const REASONS={
   '00':'Schváleno','12':'Neznámý voucher','33':'Platnost vypršela',
   '51':'Nedostatečný zůstatek','57':'Okruh mimo akceptaci provozovny',
+  '94':'Kód už byl jednou čerpán',
   '62':'Voucher blokován vydavatelem','91':'Autorizační centrum nedostupné'
 };
 
@@ -537,7 +547,7 @@ function unb64u(s){
 }
 function mcUrl(payload){
   /* base64url — v adrese pak nejsou procenta, která některé prohlížeče samy rozkódují */
-  return new URL('karta.html?v26',location.href).href+'#'+b64u(payload);
+  return new URL('karta.html?v27',location.href).href+'#'+b64u(payload);
 }
 
 /* ================= STAV ================= */
@@ -905,6 +915,11 @@ function submit(raw){
   if(m2){
     mcSign(m2.body).then(sig=>{
       if(sig!==m2.sig){ const r={ok:false,rc:'62',code:m2.code,amount}; pending=r; render(r); beep(false); return; }
+      if(spent.includes(m2.sig)){
+        const r={ok:false,rc:'94',code:m2.code,amount,multi:m2,dup:m2,
+                 v:{issuer:m2.pots[0].issuer,okruh:m2.pots[0].okruh,balance:m2.bal}};
+        pending=r; render(r); beep(false); return;
+      }
       submitMulti(m2);
     });
     return;
@@ -913,6 +928,11 @@ function submit(raw){
   if(mv){
     mcSign(mv.body).then(sig=>{
       if(sig!==mv.sig){ const r={ok:false,rc:'62',code:mv.code,amount}; pending=r; render(r); beep(false); return; }
+      if(spent.includes(mv.sig)){
+        const r={ok:false,rc:'94',code:mv.code,amount,stateless:mv,dup:mv,
+                 v:{issuer:mv.issuer,okruh:mv.okruh,balance:mv.bal}};
+        pending=r; render(r); beep(false); return;
+      }
       submitStateless(mv);
     });
     return;
@@ -969,6 +989,12 @@ function render(r){
     note='Na voucheru je '+fmt(r.partial)+' Kč. Lze čerpat tuto částku a zbytek doplatit jinak.';
     acts='<button class="btn pri full" id="partial">Čerpat '+fmt(r.partial)+' Kč</button>'
         +'<button class="btn gho full" id="dismiss" style="margin-top:8px">Zavřít</button>';
+  }else if(r.rc==='94'){
+    note='Tenhle kód jste už jednou čerpal. Držitel nejspíš ukazuje starý QR — po platbě si musí naskenovat nový. '+
+      'Bez společné hlavní knihy to terminál pozná jen u sebe; jiný terminál by ten samý kód přijal znovu. '+
+      'Tohle je hlavní důvod, proč ostrý provoz potřebuje server.';
+    acts='<button class="btn pri full" id="anyway">Přesto čerpat (ukázka)</button>'
+        +'<button class="btn gho full" id="dismiss" style="margin-top:8px">Zavřít</button>';
   }else if(r.rc==='57'){
     const list=(r.v&&KDE[r.v.okruh])?KDE[r.v.okruh]:[];
     note='Voucher je platný, ale patří do okruhu '+(r.v?OKRUHY[r.v.okruh]:'—')+', který tato provozovna nepřijímá.'
@@ -996,6 +1022,10 @@ function render(r){
   if(par) par.onclick=()=>{ const a=r.partial; const rr=authorize(r.code,a); rr.amount=a; capture(a,rr); };
   if(dis) dis.onclick=clear;
   if(vd) vd.onclick=clear;
+  const aw=$('anyway');
+  if(aw) aw.onclick=()=>{
+    if(r.multi) submitMulti(r.multi); else if(r.stateless) submitStateless(r.stateless);
+  };
   const cp=$('crossPay');
   if(cp) cp.onclick=()=>captureMulti(r.multi, amount, r.pot, true);
   const wnt=$('want');
@@ -1017,6 +1047,7 @@ async function captureMulti(v, amt, pot, cross){
       if(b>0){ p.bal-=b; zbyva-=b; prevody.push(p.issuer+' → '+pot.issuer+': '+fmt(b)+' Kč'); }
     }
   }
+  markSpent(v.sig);
   const payload=await mcBuild2(v.code, v.exp, v.by, v.pots);
   journal.unshift({id:seq++,code:v.code,amt:amt-zbyva,queued:false,void:false,dir:'in',
     at:new Date(),issuer:pot.issuer,auth:authCode()});
@@ -1051,6 +1082,7 @@ async function capture(amt,r){
   if(r.multi){ return captureMulti(r.multi, amt, r.pot, false); }
   if(r.stateless){
     const v=r.stateless, rest=v.bal-amt;
+    markSpent(v.sig);
     const payload=await mcBuild(v.code,rest,v.exp,v.okruh,v.issuer,v.by);
     journal.unshift({id:seq++,code:v.code,amt,queued:false,void:false,dir:'in',
       at:new Date(),issuer:v.issuer,auth:r.auth});
