@@ -319,7 +319,7 @@ button:focus-visible,input:focus-visible,summary:focus-visible{outline:2px solid
   </details>
 
   <div class="wordmark"><img src="icon-192.png" alt=""><span>mooncher</span></div>
-  <p class="foot">Demo terminál · autorizace běží lokálně<br>data jen v paměti prohlížeče · terminál v22</p>
+  <p class="foot">Demo terminál · autorizace běží lokálně<br>data jen v paměti prohlížeče · terminál v23</p>
 </div>
 
 <div class="sheet" id="issueSheet">
@@ -355,11 +355,20 @@ button:focus-visible,input:focus-visible,summary:focus-visible{outline:2px solid
       <input id="code" placeholder="Kód voucheru" autocomplete="off" spellcheck="false">
       <button class="btn pri" id="auth">Autorizovat</button>
     </div>
+    <p id="diag" style="margin:10px 0 0;font-family:var(--mono);font-size:10.5px;color:var(--ink-3);
+      line-height:1.6;word-break:break-word"></p>
     <div class="row2"><button class="btn gho full" id="cancel">Zrušit</button></div>
   </div>
 </div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jsQR/1.4.0/jsQR.min.js"></script>
+<script>
+if(!window.jsQR){
+  var _s=document.createElement('script');
+  _s.src='https://unpkg.com/jsqr@1.4.0/dist/jsQR.js';
+  document.head.appendChild(_s);
+}
+</script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <script>
 const $=id=>document.getElementById(id);
@@ -528,7 +537,7 @@ function unb64u(s){
 }
 function mcUrl(payload){
   /* base64url — v adrese pak nejsou procenta, která některé prohlížeče samy rozkódují */
-  return new URL('karta.html?v22',location.href).href+'#'+b64u(payload);
+  return new URL('karta.html?v23',location.href).href+'#'+b64u(payload);
 }
 
 /* ================= STAV ================= */
@@ -1388,20 +1397,34 @@ async function startCam(){
   }
 }
 function stopCam(){ if(raf)cancelAnimationFrame(raf); if(stream)stream.getTracks().forEach(t=>t.stop()); stream=null; }
-let frames=0, decodes=0;
+let frames=0, decodes=0, lastDiag=0;
+function engineName(){
+  if(detector) return 'vestavěná čtečka';
+  if(window.jsQR) return 'jsQR';
+  return 'ŽÁDNÁ — knihovna se nenačetla';
+}
+function setDiag(v,size){
+  const el=$('diag'); if(!el) return;
+  el.innerHTML='dekodér: <b style="color:'+(detector||window.jsQR?'var(--ok)':'var(--bad)')+'">'+engineName()+'</b>'+
+    ' · obraz: '+(v&&v.videoWidth?v.videoWidth+'×'+v.videoHeight:'—')+
+    ' · analýza: '+(size||'—')+
+    ' · snímků: '+frames;
+}
 async function loop(){
   if(!stream) return;
   const v=$('video');
   frames++;
-  if(frames%20===0){
-    $('sheetHint').textContent = decodes
-      ? 'Snímám… hledám QR kód. U hustého kódu ho na druhém zařízení zvětšete klepnutím.'
-      : 'Snímám, ale dekodér zatím nedostal obraz.';
+  if(frames%15===0){
+    $('sheetHint').textContent = (!detector && !window.jsQR)
+      ? 'Chybí čtečka kódů. Zkontrolujte připojení a načtěte stránku znovu — kód lze zatím opsat ručně.'
+      : (decodes ? 'Snímám… hledám QR kód. U hustého kódu ho na druhém zařízení zvětšete klepnutím.'
+                 : 'Snímám, ale dekodér zatím nedostal obraz.');
   }
   if(v.readyState>=2 && v.videoWidth){
     decodes++;
     let hit=null;
-    if(detector){ try{ const c=await detector.detect(v); if(c.length) hit=c[0].rawValue; }catch(e){} }
+    if(detector){ try{ const c=await detector.detect(v); if(c.length) hit=c[0].rawValue; }catch(e){}
+      if(frames-lastDiag>10){ lastDiag=frames; setDiag(v,'nativní'); } }
     else if(window.jsQR){
       const w=v.videoWidth,h=v.videoHeight;
       /* střídáme celý čtverec a užší střed — u hustých kódů pomůže víc pixelů na čtvereček */
@@ -1414,7 +1437,9 @@ async function loop(){
       const d=cx.getImageData(0,0,size,size);
       const r=jsQR(d.data,size,size,{inversionAttempts:'attemptBoth'});
       if(r&&r.data) hit=r.data;
+      if(frames-lastDiag>10){ lastDiag=frames; setDiag(v,size); }
     }
+    if(!detector && !window.jsQR && frames-lastDiag>10){ lastDiag=frames; setDiag(v,'—'); }
     if(hit){ frames=0; decodes=0; submit(hit); return; }
   }
   raf=requestAnimationFrame(loop);
